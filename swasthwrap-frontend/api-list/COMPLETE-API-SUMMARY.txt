@@ -1,0 +1,109 @@
+COMPLETE API LIST FOR SWASTHWRAP FRONTEND
+==========================================
+
+## AUTHENTICATION APIS (7 APIs)
+1. POST /api/auth/login - User login
+2. POST /api/auth/register - User registration  
+3. GET /api/auth/me - Get current user
+4. PUT /api/auth/profile - Update user profile
+5. POST /api/auth/logout - User logout
+6. POST /api/auth/forgot-password - Forgot password
+7. POST /api/auth/reset-password - Reset password
+
+## CHAT & AI APIS (6 APIs)
+1. POST /api/chat/message - Send message to AI
+2. GET /api/chat/history - Get chat history
+3. GET /api/chat/session/{sessionId} - Get chat session messages
+4. DELETE /api/chat/session/{sessionId} - Delete chat session
+5. PUT /api/chat/session/{sessionId}/bookmark - Bookmark chat session
+6. GET /api/chat/search - Search chat history
+
+## HEALTH DATA APIS (11 APIs)
+1. GET /api/health/documents - Get medical documents
+2. POST /api/health/documents/upload - Upload medical document
+3. DELETE /api/health/documents/{documentId} - Delete medical document
+4. GET /api/health/conditions - Get medical conditions
+5. POST /api/health/conditions - Add medical condition
+6. PUT /api/health/conditions/{conditionId} - Update medical condition
+7. GET /api/health/metrics - Get health metrics
+8. POST /api/health/metrics - Add health metric
+9. GET /api/health/goals - Get health goals
+10. POST /api/health/goals - Create health goal
+11. PUT /api/health/goals/{goalId}/progress - Update health goal progress
+
+## DASHBOARD & ANALYTICS APIS (7 APIs)
+1. GET /api/dashboard/stats - Get dashboard stats
+2. GET /api/dashboard/activity - Get recent activity
+3. GET /api/dashboard/reminders - Get upcoming reminders
+4. GET /api/dashboard/health-tips - Get health tips
+5. PUT /api/dashboard/reminders/{reminderId}/complete - Mark reminder complete
+6. GET /api/analytics/health-trends - Get health analytics
+7. GET /api/analytics/medication-adherence - Get medication adherence
+
+## SETTINGS & PREFERENCES APIS (7 APIs)
+1. GET /api/settings - Get user settings
+2. PUT /api/settings/preferences - Update user preferences
+3. PUT /api/settings/security - Update security settings
+4. PUT /api/settings/services/{serviceName} - Connect/disconnect service
+5. DELETE /api/settings/sessions/{sessionId} - Revoke login session
+6. GET /api/settings/export - Export user data
+7. DELETE /api/settings/account - Delete user account
+
+## MEDICATION & APPOINTMENTS APIS (10 APIs)
+1. GET /api/medications - Get medications
+2. POST /api/medications - Add medication
+3. PUT /api/medications/{medicationId} - Update medication
+4. DELETE /api/medications/{medicationId} - Delete medication
+5. POST /api/medications/{medicationId}/intake - Record medication intake
+6. GET /api/medications/{medicationId}/history - Get medication history
+7. GET /api/appointments - Get appointments
+8. POST /api/appointments - Create appointment
+9. PUT /api/appointments/{appointmentId} - Update appointment
+10. DELETE /api/appointments/{appointmentId} - Cancel appointment
+
+## NOTIFICATION & EMERGENCY APIS (11 APIs)
+1. GET /api/notifications - Get notifications
+2. PUT /api/notifications/{notificationId}/read - Mark notification read
+3. PUT /api/notifications/read-all - Mark all notifications read
+4. DELETE /api/notifications/{notificationId} - Delete notification
+5. PUT /api/notifications/preferences - Update notification preferences
+6. POST /api/emergency/alert - Send emergency alert
+7. GET /api/emergency/contacts - Get emergency contacts
+8. POST /api/emergency/contacts - Add emergency contact
+9. PUT /api/emergency/contacts/{contactId} - Update emergency contact
+10. DELETE /api/emergency/contacts/{contactId} - Delete emergency contact
+11. GET /api/emergency/alerts - Get emergency alert history
+
+## TOTAL: 59 APIs
+
+## API GROUPING BY HTTP METHOD:
+- GET: 23 APIs
+- POST: 17 APIs  
+- PUT: 11 APIs
+- DELETE: 8 APIs
+
+## AUTHENTICATION REQUIRED:
+- 52 APIs require JWT token
+- 7 APIs are public (login, register, forgot password, reset password)
+
+## FILE UPLOAD APIS:
+- POST /api/health/documents/upload (medical documents)
+- PUT /api/auth/profile (avatar upload - optional)
+
+## REAL-TIME/WEBSOCKET CONSIDERATIONS:
+- Chat messaging could benefit from WebSocket connection
+- Medication reminders might need push notifications
+- Emergency alerts should be real-time
+
+## PAGINATION REQUIRED:
+- GET /api/chat/history
+- GET /api/health/documents  
+- GET /api/notifications
+- GET /api/medications/{medicationId}/history
+- GET /api/emergency/alerts
+
+## MULTILINGUAL SUPPORT NEEDED:
+- Health tips content (en/hi/ta)
+- AI chat responses based on user language
+- Error messages in user's preferred language
+- Notification messages in user's language

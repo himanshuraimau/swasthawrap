@@ -1,0 +1,219 @@
+SETTINGS & PREFERENCES APIS FOR SWASTHWRAP FRONTEND
+======================================================
+
+1. GET USER SETTINGS
+   Method: GET
+   Endpoint: /api/settings
+   Purpose: Get all user settings and preferences
+   Headers: Authorization: Bearer <token>
+   Response:
+   {
+     "data": {
+       "preferences": {
+         "language": {
+           "primary": "en|hi|ta",
+           "secondary": "en|hi|ta"
+         },
+         "units": {
+           "weight": "kg|lbs",
+           "height": "cm|ft",
+           "temperature": "celsius|fahrenheit"
+         },
+         "notifications": {
+           "medication": {
+             "enabled": "boolean",
+             "time": "HH:MM",
+             "sound": "boolean"
+           },
+           "appointments": {
+             "enabled": "boolean", 
+             "advance": "string",
+             "sound": "boolean"
+           },
+           "healthTips": {
+             "enabled": "boolean",
+             "frequency": "string"
+           },
+           "reports": {
+             "enabled": "boolean",
+             "email": "boolean"
+           },
+           "emergency": {
+             "enabled": "boolean",
+             "sms": "boolean"
+           }
+         },
+         "display": {
+           "fontSize": "small|medium|large",
+           "animations": "boolean",
+           "compactMode": "boolean"
+         },
+         "privacy": {
+           "shareWithDoctors": "boolean",
+           "anonymousData": "boolean", 
+           "marketingEmails": "boolean",
+           "dataRetention": "string"
+         }
+       },
+       "security": {
+         "twoFactorEnabled": "boolean",
+         "lastPasswordChange": "YYYY-MM-DD",
+         "loginSessions": [
+           {
+             "device": "string",
+             "location": "string", 
+             "lastActive": "YYYY-MM-DD",
+             "current": "boolean"
+           }
+         ]
+       },
+       "connectedServices": [
+         {
+           "name": "string",
+           "connected": "boolean",
+           "lastSync": "YYYY-MM-DD or null"
+         }
+       ]
+     },
+     "success": "boolean"
+   }
+
+2. UPDATE USER PREFERENCES
+   Method: PUT
+   Endpoint: /api/settings/preferences
+   Purpose: Update user preferences
+   Headers: Authorization: Bearer <token>
+   Request Body:
+   {
+     "language": {
+       "primary": "string (optional)",
+       "secondary": "string (optional)"
+     },
+     "units": {
+       "weight": "string (optional)",
+       "height": "string (optional)", 
+       "temperature": "string (optional)"
+     },
+     "notifications": {
+       "medication": {
+         "enabled": "boolean (optional)",
+         "time": "string (optional)",
+         "sound": "boolean (optional)"
+       },
+       "appointments": {
+         "enabled": "boolean (optional)",
+         "advance": "string (optional)",
+         "sound": "boolean (optional)"
+       },
+       "healthTips": {
+         "enabled": "boolean (optional)",
+         "frequency": "string (optional)"
+       },
+       "reports": {
+         "enabled": "boolean (optional)",
+         "email": "boolean (optional)"
+       },
+       "emergency": {
+         "enabled": "boolean (optional)", 
+         "sms": "boolean (optional)"
+       }
+     },
+     "display": {
+       "fontSize": "string (optional)",
+       "animations": "boolean (optional)",
+       "compactMode": "boolean (optional)"
+     },
+     "privacy": {
+       "shareWithDoctors": "boolean (optional)",
+       "anonymousData": "boolean (optional)",
+       "marketingEmails": "boolean (optional)",
+       "dataRetention": "string (optional)"
+     }
+   }
+   Response:
+   {
+     "data": "updated preferences object",
+     "success": "boolean",
+     "message": "string"
+   }
+
+3. UPDATE SECURITY SETTINGS
+   Method: PUT
+   Endpoint: /api/settings/security
+   Purpose: Update security settings
+   Headers: Authorization: Bearer <token>
+   Request Body:
+   {
+     "twoFactorEnabled": "boolean (optional)",
+     "currentPassword": "string (required for sensitive changes)",
+     "newPassword": "string (optional)"
+   }
+   Response:
+   {
+     "success": "boolean",
+     "message": "string"
+   }
+
+4. CONNECT/DISCONNECT SERVICE
+   Method: PUT
+   Endpoint: /api/settings/services/{serviceName}
+   Purpose: Connect or disconnect external service
+   Headers: Authorization: Bearer <token>
+   Request Body:
+   {
+     "connected": "boolean",
+     "credentials": "object (optional - service specific)"
+   }
+   Response:
+   {
+     "data": {
+       "name": "string",
+       "connected": "boolean", 
+       "lastSync": "string or null"
+     },
+     "success": "boolean",
+     "message": "string"
+   }
+
+5. REVOKE LOGIN SESSION
+   Method: DELETE
+   Endpoint: /api/settings/sessions/{sessionId}
+   Purpose: Revoke a specific login session
+   Headers: Authorization: Bearer <token>
+   Response:
+   {
+     "success": "boolean",
+     "message": "string"
+   }
+
+6. EXPORT USER DATA
+   Method: GET
+   Endpoint: /api/settings/export
+   Purpose: Export all user data
+   Headers: Authorization: Bearer <token>
+   Query Parameters:
+   - format: string (json|csv|pdf)
+   Response:
+   {
+     "data": {
+       "downloadUrl": "string",
+       "expiresAt": "ISO date string"
+     },
+     "success": "boolean"
+   }
+
+7. DELETE USER ACCOUNT
+   Method: DELETE
+   Endpoint: /api/settings/account
+   Purpose: Delete user account and all data
+   Headers: Authorization: Bearer <token>
+   Request Body:
+   {
+     "password": "string",
+     "confirmation": "DELETE_MY_ACCOUNT"
+   }
+   Response:
+   {
+     "success": "boolean",
+     "message": "string"
+   }

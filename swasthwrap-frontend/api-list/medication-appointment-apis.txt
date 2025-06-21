@@ -1,0 +1,208 @@
+MEDICATION & APPOINTMENTS APIS FOR SWASTHWRAP FRONTEND
+========================================================
+
+1. GET MEDICATIONS
+   Method: GET
+   Endpoint: /api/medications
+   Purpose: Get user's medications list
+   Headers: Authorization: Bearer <token>
+   Query Parameters:
+   - status: string (optional: "active|inactive|all")
+   Response:
+   {
+     "data": [
+       {
+         "id": "number",
+         "name": "string",
+         "dosage": "string",
+         "frequency": "string",
+         "prescribedBy": "string",
+         "startDate": "YYYY-MM-DD",
+         "endDate": "YYYY-MM-DD (optional)",
+         "instructions": "string (optional)",
+         "status": "active|inactive",
+         "remainingDoses": "number (optional)",
+         "nextDose": "ISO date string (optional)"
+       }
+     ],
+     "success": "boolean"
+   }
+
+2. ADD MEDICATION
+   Method: POST
+   Endpoint: /api/medications
+   Purpose: Add a new medication
+   Headers: Authorization: Bearer <token>
+   Request Body:
+   {
+     "name": "string",
+     "dosage": "string",
+     "frequency": "string",
+     "prescribedBy": "string",
+     "startDate": "YYYY-MM-DD",
+     "endDate": "YYYY-MM-DD (optional)",
+     "instructions": "string (optional)",
+     "reminderTimes": ["HH:MM array"]
+   }
+   Response:
+   {
+     "data": "new medication object",
+     "success": "boolean",
+     "message": "string"
+   }
+
+3. UPDATE MEDICATION
+   Method: PUT
+   Endpoint: /api/medications/{medicationId}
+   Purpose: Update medication details
+   Headers: Authorization: Bearer <token>
+   Request Body:
+   {
+     "dosage": "string (optional)",
+     "frequency": "string (optional)",
+     "endDate": "YYYY-MM-DD (optional)",
+     "instructions": "string (optional)",
+     "status": "active|inactive (optional)",
+     "reminderTimes": ["HH:MM array (optional)"]
+   }
+   Response:
+   {
+     "data": "updated medication object",
+     "success": "boolean",
+     "message": "string"
+   }
+
+4. DELETE MEDICATION
+   Method: DELETE
+   Endpoint: /api/medications/{medicationId}
+   Purpose: Delete a medication
+   Headers: Authorization: Bearer <token>
+   Response:
+   {
+     "success": "boolean",
+     "message": "string"
+   }
+
+5. RECORD MEDICATION INTAKE
+   Method: POST
+   Endpoint: /api/medications/{medicationId}/intake
+   Purpose: Record that medication was taken
+   Headers: Authorization: Bearer <token>
+   Request Body:
+   {
+     "takenAt": "ISO date string",
+     "dosage": "string (optional - if different from prescribed)",
+     "notes": "string (optional)"
+   }
+   Response:
+   {
+     "success": "boolean",
+     "message": "string"
+   }
+
+6. GET MEDICATION HISTORY
+   Method: GET
+   Endpoint: /api/medications/{medicationId}/history
+   Purpose: Get intake history for a specific medication
+   Headers: Authorization: Bearer <token>
+   Query Parameters:
+   - from: YYYY-MM-DD (optional)
+   - to: YYYY-MM-DD (optional)
+   Response:
+   {
+     "data": [
+       {
+         "takenAt": "ISO date string",
+         "dosage": "string",
+         "notes": "string (optional)",
+         "onTime": "boolean"
+       }
+     ],
+     "success": "boolean"
+   }
+
+7. GET APPOINTMENTS
+   Method: GET
+   Endpoint: /api/appointments
+   Purpose: Get user's appointments
+   Headers: Authorization: Bearer <token>
+   Query Parameters:
+   - status: string (optional: "upcoming|past|all")
+   - from: YYYY-MM-DD (optional)
+   - to: YYYY-MM-DD (optional)
+   Response:
+   {
+     "data": [
+       {
+         "id": "number",
+         "title": "string",
+         "doctorName": "string",
+         "specialty": "string",
+         "date": "YYYY-MM-DD",
+         "time": "HH:MM",
+         "duration": "number (minutes)",
+         "location": "string",
+         "type": "in-person|virtual",
+         "status": "scheduled|completed|cancelled",
+         "notes": "string (optional)",
+         "reminderSet": "boolean"
+       }
+     ],
+     "success": "boolean"
+   }
+
+8. CREATE APPOINTMENT
+   Method: POST
+   Endpoint: /api/appointments
+   Purpose: Create a new appointment
+   Headers: Authorization: Bearer <token>
+   Request Body:
+   {
+     "title": "string",
+     "doctorName": "string",
+     "specialty": "string",
+     "date": "YYYY-MM-DD",
+     "time": "HH:MM",
+     "duration": "number",
+     "location": "string",
+     "type": "in-person|virtual",
+     "notes": "string (optional)",
+     "reminderAdvance": "number (minutes before)"
+   }
+   Response:
+   {
+     "data": "new appointment object",
+     "success": "boolean",
+     "message": "string"
+   }
+
+9. UPDATE APPOINTMENT
+   Method: PUT
+   Endpoint: /api/appointments/{appointmentId}
+   Purpose: Update appointment details
+   Headers: Authorization: Bearer <token>
+   Request Body:
+   {
+     "date": "YYYY-MM-DD (optional)",
+     "time": "HH:MM (optional)",
+     "location": "string (optional)",
+     "notes": "string (optional)",
+     "status": "string (optional)"
+   }
+   Response:
+   {
+     "data": "updated appointment object",
+     "success": "boolean",
+     "message": "string"
+   }
+
+10. CANCEL APPOINTMENT
+    Method: DELETE
+    Endpoint: /api/appointments/{appointmentId}
+    Purpose: Cancel an appointment
+    Headers: Authorization: Bearer <token>
+    Response:
+    {
+      "success": "boolean",
+      "message": "string"
+    }

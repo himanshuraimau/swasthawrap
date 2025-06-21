@@ -1,0 +1,237 @@
+HEALTH DATA APIS FOR SWASTHWRAP FRONTEND
+===========================================
+
+1. GET MEDICAL DOCUMENTS
+   Method: GET
+   Endpoint: /api/health/documents
+   Purpose: Get user's uploaded medical documents
+   Headers: Authorization: Bearer <token>
+   Query Parameters:
+   - category: string (optional filter: "Laboratory", "Cardiology", "Medication", etc.)
+   - page: number (default: 1)
+   - limit: number (default: 10)
+   Response:
+   {
+     "data": [
+       {
+         "id": "number",
+         "name": "string",
+         "type": "string",
+         "date": "YYYY-MM-DD",
+         "size": "string", 
+         "category": "string",
+         "tags": ["string array"],
+         "status": "string",
+         "url": "string (download URL)"
+       }
+     ],
+     "total": "number",
+     "page": "number",
+     "limit": "number", 
+     "hasMore": "boolean"
+   }
+
+2. UPLOAD MEDICAL DOCUMENT
+   Method: POST
+   Endpoint: /api/health/documents/upload
+   Purpose: Upload a medical document
+   Headers: Authorization: Bearer <token>
+   Content-Type: multipart/form-data
+   Request Body:
+   {
+     "file": "File object",
+     "category": "string",
+     "tags": ["string array"],
+     "description": "string (optional)"
+   }
+   Response:
+   {
+     "data": {
+       "id": "number",
+       "name": "string",
+       "type": "string",
+       "date": "YYYY-MM-DD",
+       "size": "string",
+       "category": "string", 
+       "tags": ["string array"],
+       "status": "string",
+       "url": "string"
+     },
+     "success": "boolean",
+     "message": "string"
+   }
+
+3. DELETE MEDICAL DOCUMENT
+   Method: DELETE
+   Endpoint: /api/health/documents/{documentId}
+   Purpose: Delete a medical document
+   Headers: Authorization: Bearer <token>
+   Response:
+   {
+     "success": "boolean",
+     "message": "string"
+   }
+
+4. GET MEDICAL CONDITIONS
+   Method: GET
+   Endpoint: /api/health/conditions
+   Purpose: Get user's medical conditions
+   Headers: Authorization: Bearer <token>
+   Response:
+   {
+     "data": [
+       {
+         "id": "number",
+         "name": "string",
+         "diagnosed": "YYYY-MM-DD",
+         "status": "Managed|Controlled|Active|Resolved",
+         "severity": "Mild|Moderate|Severe",
+         "medications": ["string array"],
+         "lastUpdate": "YYYY-MM-DD",
+         "notes": "string"
+       }
+     ],
+     "success": "boolean"
+   }
+
+5. ADD MEDICAL CONDITION
+   Method: POST
+   Endpoint: /api/health/conditions
+   Purpose: Add a new medical condition
+   Headers: Authorization: Bearer <token>
+   Request Body:
+   {
+     "name": "string",
+     "diagnosed": "YYYY-MM-DD",
+     "status": "string",
+     "severity": "string",
+     "medications": ["string array"],
+     "notes": "string"
+   }
+   Response:
+   {
+     "data": "new condition object",
+     "success": "boolean",
+     "message": "string"
+   }
+
+6. UPDATE MEDICAL CONDITION
+   Method: PUT
+   Endpoint: /api/health/conditions/{conditionId}
+   Purpose: Update an existing medical condition
+   Headers: Authorization: Bearer <token>
+   Request Body:
+   {
+     "status": "string (optional)",
+     "severity": "string (optional)",
+     "medications": ["string array (optional)"],
+     "notes": "string (optional)"
+   }
+   Response:
+   {
+     "data": "updated condition object",
+     "success": "boolean",
+     "message": "string"
+   }
+
+7. GET HEALTH METRICS
+   Method: GET
+   Endpoint: /api/health/metrics
+   Purpose: Get user's health metrics (vitals, measurements)
+   Headers: Authorization: Bearer <token>
+   Query Parameters:
+   - type: string (optional filter: "Blood Pressure", "Blood Glucose", "Weight", etc.)
+   - dateFrom: YYYY-MM-DD (optional)
+   - dateTo: YYYY-MM-DD (optional)
+   Response:
+   {
+     "data": [
+       {
+         "date": "YYYY-MM-DD",
+         "type": "string",
+         "value": "string",
+         "unit": "string",
+         "status": "Normal|Elevated|Low|High|Fair|Stable",
+         "notes": "string (optional)"
+       }
+     ],
+     "success": "boolean"
+   }
+
+8. ADD HEALTH METRIC
+   Method: POST
+   Endpoint: /api/health/metrics
+   Purpose: Add a new health metric reading
+   Headers: Authorization: Bearer <token>
+   Request Body:
+   {
+     "type": "string",
+     "value": "string",
+     "unit": "string",
+     "date": "YYYY-MM-DD",
+     "notes": "string (optional)"
+   }
+   Response:
+   {
+     "data": "new metric object",
+     "success": "boolean", 
+     "message": "string"
+   }
+
+9. GET HEALTH GOALS
+   Method: GET
+   Endpoint: /api/health/goals
+   Purpose: Get user's health goals
+   Headers: Authorization: Bearer <token>
+   Response:
+   {
+     "data": [
+       {
+         "id": "number",
+         "goal": "string",
+         "target": "string",
+         "current": "string",
+         "unit": "string",
+         "progress": "number (0-100)",
+         "deadline": "YYYY-MM-DD (optional)",
+         "category": "string (optional)"
+       }
+     ],
+     "success": "boolean"
+   }
+
+10. CREATE HEALTH GOAL
+    Method: POST
+    Endpoint: /api/health/goals
+    Purpose: Create a new health goal
+    Headers: Authorization: Bearer <token>
+    Request Body:
+    {
+      "goal": "string",
+      "target": "string",
+      "unit": "string", 
+      "deadline": "YYYY-MM-DD (optional)",
+      "category": "string (optional)"
+    }
+    Response:
+    {
+      "data": "new goal object",
+      "success": "boolean",
+      "message": "string"
+    }
+
+11. UPDATE HEALTH GOAL PROGRESS
+    Method: PUT
+    Endpoint: /api/health/goals/{goalId}/progress
+    Purpose: Update progress on a health goal
+    Headers: Authorization: Bearer <token>
+    Request Body:
+    {
+      "current": "string"
+    }
+    Response:
+    {
+      "data": "updated goal object",
+      "success": "boolean",
+      "message": "string"
+    }

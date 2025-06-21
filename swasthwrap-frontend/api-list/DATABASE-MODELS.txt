@@ -1,0 +1,834 @@
+DATABASE DATA MODELS FOR SWASTHWRAP BACKEND
+===============================================
+
+This file contains all database schemas and data models required for the Swasthwrap health management platform.
+
+## 👤 USER MANAGEMENT MODELS
+
+### users
+Primary table for user authentication and basic info
+```
+users {
+  id: UUID (Primary Key)
+  name: VARCHAR(255) NOT NULL
+  email: VARCHAR(255) UNIQUE NOT NULL
+  password_hash: VARCHAR(255) NOT NULL
+  language: ENUM('en', 'hi', 'ta') DEFAULT 'en'
+  interests: JSON (array of strings)
+  health_score: INTEGER DEFAULT 0
+  streak: INTEGER DEFAULT 0
+  upcoming_appointments: INTEGER DEFAULT 0
+  medications_due: INTEGER DEFAULT 0
+  avatar: VARCHAR(500) (URL to avatar image)
+  phone: VARCHAR(20)
+  date_of_birth: DATE
+  gender: ENUM('male', 'female', 'other')
+  blood_group: VARCHAR(5)
+  address: TEXT
+  email_verified: BOOLEAN DEFAULT FALSE
+  is_active: BOOLEAN DEFAULT TRUE
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  updated_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE
+}
+```
+
+### user_profiles
+Extended profile information
+```
+user_profiles {
+  id: UUID (Primary Key)
+  user_id: UUID (Foreign Key -> users.id)
+  emergency_contact_name: VARCHAR(255)
+  emergency_contact_relationship: VARCHAR(100)
+  emergency_contact_phone: VARCHAR(20)
+  emergency_contact_email: VARCHAR(255)
+  height: DECIMAL(5,2) (in cm)
+  weight: DECIMAL(5,2) (in kg)
+  activity_level: ENUM('sedentary', 'light', 'moderate', 'active', 'very_active')
+  occupation: VARCHAR(255)
+  insurance_provider: VARCHAR(255)
+  insurance_number: VARCHAR(100)
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  updated_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE
+}
+```
+
+### password_resets
+Password reset tokens
+```
+password_resets {
+  id: UUID (Primary Key)
+  email: VARCHAR(255) NOT NULL
+  token: VARCHAR(255) NOT NULL
+  expires_at: TIMESTAMP NOT NULL
+  used: BOOLEAN DEFAULT FALSE
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+}
+```
+
+### user_sessions
+Active user sessions for security tracking
+```
+user_sessions {
+  id: UUID (Primary Key)
+  user_id: UUID (Foreign Key -> users.id)
+  session_token: VARCHAR(500) NOT NULL
+  device_info: VARCHAR(500)
+  ip_address: VARCHAR(45)
+  location: VARCHAR(255)
+  last_active: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  expires_at: TIMESTAMP NOT NULL
+  is_current: BOOLEAN DEFAULT FALSE
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+}
+```
+
+---
+
+## 🏥 HEALTH DATA MODELS
+
+### medical_conditions
+User's medical conditions and diagnoses
+```
+medical_conditions {
+  id: UUID (Primary Key)
+  user_id: UUID (Foreign Key -> users.id)
+  name: VARCHAR(255) NOT NULL
+  icd_code: VARCHAR(20) (International Classification of Diseases code)
+  diagnosed_date: DATE NOT NULL
+  status: ENUM('managed', 'controlled', 'active', 'resolved') NOT NULL
+  severity: ENUM('mild', 'moderate', 'severe') NOT NULL
+  notes: TEXT
+  diagnosed_by: VARCHAR(255) (doctor name)
+  last_updated: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  updated_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE
+}
+```
+
+### condition_medications
+Medications associated with conditions
+```
+condition_medications {
+  id: UUID (Primary Key)
+  condition_id: UUID (Foreign Key -> medical_conditions.id)
+  medication_name: VARCHAR(255) NOT NULL
+  dosage: VARCHAR(100)
+  frequency: VARCHAR(100)
+  start_date: DATE
+  end_date: DATE
+  is_active: BOOLEAN DEFAULT TRUE
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+}
+```
+
+### health_metrics
+Vital signs and health measurements
+```
+health_metrics {
+  id: UUID (Primary Key)
+  user_id: UUID (Foreign Key -> users.id)
+  metric_type: ENUM('blood_pressure', 'blood_glucose', 'weight', 'height', 'bmi', 'heart_rate', 'temperature', 'oxygen_saturation', 'hba1c', 'cholesterol') NOT NULL
+  value: VARCHAR(50) NOT NULL
+  unit: VARCHAR(20) NOT NULL
+  systolic: INTEGER (for blood pressure)
+  diastolic: INTEGER (for blood pressure)
+  status: ENUM('normal', 'elevated', 'low', 'high', 'fair', 'stable') 
+  notes: TEXT
+  measured_at: TIMESTAMP NOT NULL
+  device_used: VARCHAR(255)
+  location: VARCHAR(255)
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+}
+```
+
+### health_goals
+User's health and fitness goals
+```
+health_goals {
+  id: UUID (Primary Key)
+  user_id: UUID (Foreign Key -> users.id)
+  goal_title: VARCHAR(255) NOT NULL
+  target_value: VARCHAR(50) NOT NULL
+  current_value: VARCHAR(50) DEFAULT '0'
+  unit: VARCHAR(20) NOT NULL
+  progress_percentage: DECIMAL(5,2) DEFAULT 0
+  deadline: DATE
+  category: ENUM('weight', 'fitness', 'nutrition', 'medication', 'lifestyle', 'medical') 
+  priority: ENUM('low', 'medium', 'high') DEFAULT 'medium'
+  status: ENUM('active', 'completed', 'paused', 'cancelled') DEFAULT 'active'
+  notes: TEXT
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  updated_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE
+}
+```
+
+### goal_progress
+Track daily/weekly progress on goals
+```
+goal_progress {
+  id: UUID (Primary Key)
+  goal_id: UUID (Foreign Key -> health_goals.id)
+  progress_value: VARCHAR(50) NOT NULL
+  progress_date: DATE NOT NULL
+  notes: TEXT
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+}
+```
+
+---
+
+## 📄 MEDICAL DOCUMENTS MODELS
+
+### medical_documents
+Uploaded medical documents and reports
+```
+medical_documents {
+  id: UUID (Primary Key)
+  user_id: UUID (Foreign Key -> users.id)
+  document_name: VARCHAR(255) NOT NULL
+  original_filename: VARCHAR(255) NOT NULL
+  file_path: VARCHAR(500) NOT NULL
+  file_size: BIGINT NOT NULL (in bytes)
+  file_type: VARCHAR(100) NOT NULL
+  mime_type: VARCHAR(100) NOT NULL
+  category: ENUM('laboratory', 'radiology', 'prescription', 'discharge_summary', 'insurance', 'vaccination', 'other') NOT NULL
+  document_date: DATE
+  description: TEXT
+  status: ENUM('uploaded', 'processing', 'reviewed', 'archived') DEFAULT 'uploaded'
+  is_sensitive: BOOLEAN DEFAULT FALSE
+  encryption_key: VARCHAR(255) (for sensitive documents)
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  updated_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE
+}
+```
+
+### document_tags
+Tags for categorizing documents
+```
+document_tags {
+  id: UUID (Primary Key)
+  document_id: UUID (Foreign Key -> medical_documents.id)
+  tag_name: VARCHAR(100) NOT NULL
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+}
+```
+
+### document_shares
+Track document sharing with healthcare providers
+```
+document_shares {
+  id: UUID (Primary Key)
+  document_id: UUID (Foreign Key -> medical_documents.id)
+  shared_with: VARCHAR(255) NOT NULL (email or doctor ID)
+  share_type: ENUM('view', 'download') DEFAULT 'view'
+  expires_at: TIMESTAMP
+  access_count: INTEGER DEFAULT 0
+  last_accessed: TIMESTAMP
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+}
+```
+
+---
+
+## 🤖 CHAT & AI MODELS
+
+### chat_sessions
+AI chat conversation sessions
+```
+chat_sessions {
+  id: UUID (Primary Key)
+  user_id: UUID (Foreign Key -> users.id)
+  session_title: VARCHAR(255)
+  session_summary: TEXT
+  language: ENUM('en', 'hi', 'ta') NOT NULL
+  total_messages: INTEGER DEFAULT 0
+  duration_minutes: INTEGER DEFAULT 0
+  is_bookmarked: BOOLEAN DEFAULT FALSE
+  status: ENUM('active', 'completed', 'archived') DEFAULT 'active'
+  started_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  ended_at: TIMESTAMP
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  updated_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE
+}
+```
+
+### chat_messages
+Individual messages in chat sessions
+```
+chat_messages {
+  id: UUID (Primary Key)
+  session_id: UUID (Foreign Key -> chat_sessions.id)
+  message_type: ENUM('user', 'ai') NOT NULL
+  content: TEXT NOT NULL
+  language: ENUM('en', 'hi', 'ta') NOT NULL
+  has_attachment: BOOLEAN DEFAULT FALSE
+  ai_confidence: DECIMAL(3,2) (0.00 to 1.00)
+  processing_time_ms: INTEGER
+  token_count: INTEGER
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+}
+```
+
+### chat_attachments
+Files attached to chat messages
+```
+chat_attachments {
+  id: UUID (Primary Key)
+  message_id: UUID (Foreign Key -> chat_messages.id)
+  file_name: VARCHAR(255) NOT NULL
+  file_path: VARCHAR(500) NOT NULL
+  file_size: BIGINT NOT NULL
+  file_type: VARCHAR(100) NOT NULL
+  processed: BOOLEAN DEFAULT FALSE
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+}
+```
+
+### ai_responses
+AI response metadata and sources
+```
+ai_responses {
+  id: UUID (Primary Key)
+  message_id: UUID (Foreign Key -> chat_messages.id)
+  sources: JSON (array of source references)
+  suggestions: JSON (array of follow-up suggestions)
+  intent_detected: VARCHAR(255)
+  entities_extracted: JSON
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+}
+```
+
+### chat_session_tags
+Tags for categorizing chat sessions
+```
+chat_session_tags {
+  id: UUID (Primary Key)
+  session_id: UUID (Foreign Key -> chat_sessions.id)
+  tag_name: VARCHAR(100) NOT NULL
+  auto_generated: BOOLEAN DEFAULT FALSE
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+}
+```
+
+---
+
+## 💊 MEDICATION MODELS
+
+### medications
+User's medication list
+```
+medications {
+  id: UUID (Primary Key)
+  user_id: UUID (Foreign Key -> users.id)
+  medication_name: VARCHAR(255) NOT NULL
+  generic_name: VARCHAR(255)
+  brand_name: VARCHAR(255)
+  dosage: VARCHAR(100) NOT NULL
+  dosage_form: ENUM('tablet', 'capsule', 'liquid', 'injection', 'inhaler', 'patch', 'other')
+  strength: VARCHAR(50)
+  frequency: VARCHAR(100) NOT NULL
+  route: ENUM('oral', 'injection', 'topical', 'inhalation', 'other')
+  prescribed_by: VARCHAR(255) NOT NULL
+  pharmacy: VARCHAR(255)
+  prescription_number: VARCHAR(100)
+  start_date: DATE NOT NULL
+  end_date: DATE
+  refills_remaining: INTEGER
+  instructions: TEXT
+  side_effects: TEXT
+  status: ENUM('active', 'discontinued', 'completed') DEFAULT 'active'
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  updated_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE
+}
+```
+
+### medication_schedules
+Dosing schedule for medications
+```
+medication_schedules {
+  id: UUID (Primary Key)
+  medication_id: UUID (Foreign Key -> medications.id)
+  time_of_day: TIME NOT NULL
+  days_of_week: JSON (array of day numbers 0-6)
+  dosage_amount: VARCHAR(50)
+  special_instructions: TEXT
+  is_active: BOOLEAN DEFAULT TRUE
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+}
+```
+
+### medication_intake
+Record of actual medication intake
+```
+medication_intake {
+  id: UUID (Primary Key)
+  medication_id: UUID (Foreign Key -> medications.id)
+  scheduled_time: TIMESTAMP NOT NULL
+  actual_time: TIMESTAMP
+  dosage_taken: VARCHAR(50)
+  status: ENUM('taken', 'missed', 'delayed', 'skipped') NOT NULL
+  notes: TEXT
+  side_effects_experienced: TEXT
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+}
+```
+
+### medication_reminders
+Reminder settings for medications
+```
+medication_reminders {
+  id: UUID (Primary Key)
+  medication_id: UUID (Foreign Key -> medications.id)
+  reminder_time: TIME NOT NULL
+  days_of_week: JSON (array of day numbers)
+  reminder_type: ENUM('push', 'sms', 'email') NOT NULL
+  is_active: BOOLEAN DEFAULT TRUE
+  sound_enabled: BOOLEAN DEFAULT TRUE
+  vibration_enabled: BOOLEAN DEFAULT TRUE
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+}
+```
+
+---
+
+## 📅 APPOINTMENT MODELS
+
+### appointments
+Medical appointments and consultations
+```
+appointments {
+  id: UUID (Primary Key)
+  user_id: UUID (Foreign Key -> users.id)
+  appointment_title: VARCHAR(255) NOT NULL
+  doctor_name: VARCHAR(255) NOT NULL
+  doctor_specialty: VARCHAR(255)
+  clinic_hospital: VARCHAR(255)
+  appointment_type: ENUM('consultation', 'follow-up', 'emergency', 'procedure', 'test') NOT NULL
+  visit_type: ENUM('in-person', 'virtual', 'phone') NOT NULL
+  appointment_date: DATE NOT NULL
+  appointment_time: TIME NOT NULL
+  duration_minutes: INTEGER DEFAULT 30
+  location_address: TEXT
+  location_coordinates: POINT (latitude, longitude)
+  virtual_meeting_link: VARCHAR(500)
+  status: ENUM('scheduled', 'confirmed', 'completed', 'cancelled', 'no-show') DEFAULT 'scheduled'
+  notes: TEXT
+  preparation_instructions: TEXT
+  cost: DECIMAL(10,2)
+  insurance_covered: BOOLEAN DEFAULT FALSE
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  updated_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE
+}
+```
+
+### appointment_reminders
+Reminder settings for appointments
+```
+appointment_reminders {
+  id: UUID (Primary Key)
+  appointment_id: UUID (Foreign Key -> appointments.id)
+  reminder_type: ENUM('push', 'sms', 'email') NOT NULL
+  reminder_time: INTEGER NOT NULL (minutes before appointment)
+  sent: BOOLEAN DEFAULT FALSE
+  sent_at: TIMESTAMP
+  is_active: BOOLEAN DEFAULT TRUE
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+}
+```
+
+---
+
+## 🔔 NOTIFICATION MODELS
+
+### notifications
+System notifications to users
+```
+notifications {
+  id: UUID (Primary Key)
+  user_id: UUID (Foreign Key -> users.id)
+  notification_type: ENUM('medication', 'appointment', 'health', 'system', 'emergency') NOT NULL
+  title: VARCHAR(255) NOT NULL
+  message: TEXT NOT NULL
+  priority: ENUM('low', 'medium', 'high', 'urgent') DEFAULT 'medium'
+  is_read: BOOLEAN DEFAULT FALSE
+  action_url: VARCHAR(500)
+  metadata: JSON (additional data like medication_id, appointment_id)
+  delivery_method: ENUM('push', 'email', 'sms', 'in-app') NOT NULL
+  delivered: BOOLEAN DEFAULT FALSE
+  delivered_at: TIMESTAMP
+  expires_at: TIMESTAMP
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+}
+```
+
+### notification_preferences
+User notification preferences
+```
+notification_preferences {
+  id: UUID (Primary Key)
+  user_id: UUID (Foreign Key -> users.id)
+  notification_type: ENUM('medication', 'appointment', 'health', 'system', 'emergency') NOT NULL
+  push_enabled: BOOLEAN DEFAULT TRUE
+  email_enabled: BOOLEAN DEFAULT TRUE
+  sms_enabled: BOOLEAN DEFAULT FALSE
+  in_app_enabled: BOOLEAN DEFAULT TRUE
+  quiet_hours_enabled: BOOLEAN DEFAULT FALSE
+  quiet_start_time: TIME
+  quiet_end_time: TIME
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  updated_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE
+}
+```
+
+---
+
+## 🚨 EMERGENCY MODELS
+
+### emergency_contacts
+User's emergency contact information
+```
+emergency_contacts {
+  id: UUID (Primary Key)
+  user_id: UUID (Foreign Key -> users.id)
+  contact_name: VARCHAR(255) NOT NULL
+  relationship: VARCHAR(100) NOT NULL
+  primary_phone: VARCHAR(20) NOT NULL
+  secondary_phone: VARCHAR(20)
+  email: VARCHAR(255)
+  address: TEXT
+  priority_order: INTEGER NOT NULL (1 = highest priority)
+  can_receive_alerts: BOOLEAN DEFAULT TRUE
+  preferred_contact_method: ENUM('phone', 'sms', 'email') DEFAULT 'phone'
+  notes: TEXT
+  is_active: BOOLEAN DEFAULT TRUE
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  updated_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE
+}
+```
+
+### emergency_alerts
+Emergency alerts sent by users
+```
+emergency_alerts {
+  id: UUID (Primary Key)
+  user_id: UUID (Foreign Key -> users.id)
+  alert_type: ENUM('medical', 'fall', 'panic', 'custom') NOT NULL
+  alert_message: TEXT
+  location_latitude: DECIMAL(10, 8)
+  location_longitude: DECIMAL(11, 8)
+  location_address: TEXT
+  vital_signs: JSON (heart rate, blood pressure, etc.)
+  is_resolved: BOOLEAN DEFAULT FALSE
+  resolved_at: TIMESTAMP
+  resolved_by: VARCHAR(255)
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+}
+```
+
+### alert_deliveries
+Track delivery of emergency alerts
+```
+alert_deliveries {
+  id: UUID (Primary Key)
+  alert_id: UUID (Foreign Key -> emergency_alerts.id)
+  contact_id: UUID (Foreign Key -> emergency_contacts.id)
+  delivery_method: ENUM('sms', 'call', 'email') NOT NULL
+  phone_number: VARCHAR(20)
+  email_address: VARCHAR(255)
+  delivery_status: ENUM('pending', 'sent', 'delivered', 'failed') DEFAULT 'pending'
+  delivery_attempts: INTEGER DEFAULT 0
+  last_attempt_at: TIMESTAMP
+  delivered_at: TIMESTAMP
+  error_message: TEXT
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+}
+```
+
+---
+
+## ⚙️ SETTINGS & PREFERENCES MODELS
+
+### user_preferences
+User application preferences
+```
+user_preferences {
+  id: UUID (Primary Key)
+  user_id: UUID (Foreign Key -> users.id)
+  primary_language: ENUM('en', 'hi', 'ta') DEFAULT 'en'
+  secondary_language: ENUM('en', 'hi', 'ta')
+  weight_unit: ENUM('kg', 'lbs') DEFAULT 'kg'
+  height_unit: ENUM('cm', 'ft') DEFAULT 'cm'
+  temperature_unit: ENUM('celsius', 'fahrenheit') DEFAULT 'celsius'
+  date_format: ENUM('DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD') DEFAULT 'DD/MM/YYYY'
+  time_format: ENUM('12', '24') DEFAULT '24'
+  font_size: ENUM('small', 'medium', 'large') DEFAULT 'medium'
+  animations_enabled: BOOLEAN DEFAULT TRUE
+  compact_mode: BOOLEAN DEFAULT FALSE
+  dark_mode: BOOLEAN DEFAULT FALSE
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  updated_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE
+}
+```
+
+### privacy_settings
+User privacy and data sharing preferences
+```
+privacy_settings {
+  id: UUID (Primary Key)
+  user_id: UUID (Foreign Key -> users.id)
+  share_data_with_doctors: BOOLEAN DEFAULT TRUE
+  allow_anonymous_analytics: BOOLEAN DEFAULT FALSE
+  marketing_emails_enabled: BOOLEAN DEFAULT FALSE
+  data_retention_period: ENUM('1_year', '2_years', '5_years', 'indefinite') DEFAULT '2_years'
+  location_tracking_enabled: BOOLEAN DEFAULT FALSE
+  biometric_data_sharing: BOOLEAN DEFAULT FALSE
+  research_participation: BOOLEAN DEFAULT FALSE
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  updated_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE
+}
+```
+
+### connected_services
+External services connected to user account
+```
+connected_services {
+  id: UUID (Primary Key)
+  user_id: UUID (Foreign Key -> users.id)
+  service_name: ENUM('google_fit', 'apple_health', 'fitbit', 'samsung_health', 'garmin') NOT NULL
+  service_user_id: VARCHAR(255)
+  access_token: TEXT
+  refresh_token: TEXT
+  token_expires_at: TIMESTAMP
+  is_connected: BOOLEAN DEFAULT TRUE
+  last_sync_at: TIMESTAMP
+  sync_frequency: ENUM('manual', 'hourly', 'daily', 'weekly') DEFAULT 'daily'
+  data_types_synced: JSON (array of data types)
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  updated_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE
+}
+```
+
+---
+
+## 📊 ANALYTICS & REPORTING MODELS
+
+### health_trends
+Calculated health trends for analytics
+```
+health_trends {
+  id: UUID (Primary Key)
+  user_id: UUID (Foreign Key -> users.id)
+  metric_type: VARCHAR(100) NOT NULL
+  trend_period: ENUM('weekly', 'monthly', 'quarterly', 'yearly') NOT NULL
+  period_start: DATE NOT NULL
+  period_end: DATE NOT NULL
+  average_value: DECIMAL(10,2)
+  min_value: DECIMAL(10,2)
+  max_value: DECIMAL(10,2)
+  trend_direction: ENUM('improving', 'stable', 'declining') 
+  confidence_score: DECIMAL(3,2)
+  data_points: INTEGER
+  calculated_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+}
+```
+
+### medication_adherence
+Medication adherence statistics
+```
+medication_adherence {
+  id: UUID (Primary Key)
+  user_id: UUID (Foreign Key -> users.id)
+  medication_id: UUID (Foreign Key -> medications.id)
+  period_start: DATE NOT NULL
+  period_end: DATE NOT NULL
+  total_scheduled: INTEGER NOT NULL
+  total_taken: INTEGER NOT NULL
+  total_missed: INTEGER NOT NULL
+  adherence_percentage: DECIMAL(5,2) NOT NULL
+  longest_streak: INTEGER DEFAULT 0
+  current_streak: INTEGER DEFAULT 0
+  calculated_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+}
+```
+
+### user_activity
+Track user engagement and activity
+```
+user_activity {
+  id: UUID (Primary Key)
+  user_id: UUID (Foreign Key -> users.id)
+  activity_type: ENUM('login', 'chat', 'upload', 'medication_taken', 'goal_updated', 'appointment_created') NOT NULL
+  activity_description: TEXT
+  metadata: JSON (additional activity data)
+  ip_address: VARCHAR(45)
+  user_agent: TEXT
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+}
+```
+
+---
+
+## 🔍 SEARCH & INDEXING MODELS
+
+### search_index
+Full-text search index for chat and documents
+```
+search_index {
+  id: UUID (Primary Key)
+  user_id: UUID (Foreign Key -> users.id)
+  content_type: ENUM('chat_message', 'document', 'health_note') NOT NULL
+  content_id: UUID NOT NULL
+  searchable_content: TEXT NOT NULL
+  language: ENUM('en', 'hi', 'ta') NOT NULL
+  keywords: JSON (array of extracted keywords)
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  updated_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE
+}
+```
+
+---
+
+## 📋 AUDIT & LOGGING MODELS
+
+### audit_logs
+System audit trail for security and compliance
+```
+audit_logs {
+  id: UUID (Primary Key)
+  user_id: UUID (Foreign Key -> users.id)
+  action: VARCHAR(255) NOT NULL
+  resource_type: VARCHAR(100) NOT NULL
+  resource_id: UUID
+  old_values: JSON
+  new_values: JSON
+  ip_address: VARCHAR(45)
+  user_agent: TEXT
+  success: BOOLEAN NOT NULL
+  error_message: TEXT
+  created_at: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+}
+```
+
+---
+
+## 🔑 INDEXES AND CONSTRAINTS
+
+### Primary Indexes (Already defined as Primary Keys)
+- All tables have UUID primary keys
+
+### Foreign Key Constraints
+- All foreign key relationships maintain referential integrity
+- CASCADE DELETE where appropriate (user deletion cascades to user data)
+- RESTRICT DELETE for critical relationships
+
+### Performance Indexes
+```sql
+-- User lookups
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_phone ON users(phone);
+
+-- Health data queries
+CREATE INDEX idx_health_metrics_user_type ON health_metrics(user_id, metric_type);
+CREATE INDEX idx_health_metrics_date ON health_metrics(measured_at);
+
+-- Chat search
+CREATE INDEX idx_chat_messages_session ON chat_messages(session_id);
+CREATE INDEX idx_chat_sessions_user ON chat_sessions(user_id);
+
+-- Medication tracking
+CREATE INDEX idx_medications_user_status ON medications(user_id, status);
+CREATE INDEX idx_medication_intake_date ON medication_intake(scheduled_time);
+
+-- Notifications
+CREATE INDEX idx_notifications_user_read ON notifications(user_id, is_read);
+CREATE INDEX idx_notifications_created ON notifications(created_at);
+
+-- Full-text search
+CREATE FULLTEXT INDEX idx_search_content ON search_index(searchable_content);
+
+-- Audit and security
+CREATE INDEX idx_audit_logs_user_action ON audit_logs(user_id, action);
+CREATE INDEX idx_user_sessions_token ON user_sessions(session_token);
+```
+
+### Data Validation Constraints
+```sql
+-- Email validation
+ALTER TABLE users ADD CONSTRAINT chk_email_format 
+CHECK (email REGEXP '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$');
+
+-- Phone number validation
+ALTER TABLE users ADD CONSTRAINT chk_phone_format 
+CHECK (phone REGEXP '^[+]?[1-9]?[0-9]{7,15}$');
+
+-- Health metric values
+ALTER TABLE health_metrics ADD CONSTRAINT chk_positive_values 
+CHECK (CAST(value AS DECIMAL) >= 0);
+
+-- Percentage constraints
+ALTER TABLE medication_adherence ADD CONSTRAINT chk_adherence_percentage 
+CHECK (adherence_percentage >= 0 AND adherence_percentage <= 100);
+
+-- Date constraints
+ALTER TABLE appointments ADD CONSTRAINT chk_future_appointments 
+CHECK (appointment_date >= CURRENT_DATE);
+```
+
+---
+
+## 💾 STORAGE CONSIDERATIONS
+
+### File Storage Schema
+```
+file_storage_locations {
+  - /uploads/avatars/{user_id}/
+  - /uploads/documents/{user_id}/{year}/{month}/
+  - /uploads/chat_attachments/{session_id}/
+  - /backups/user_data/{user_id}/
+}
+
+encryption_keys {
+  - AES-256 for sensitive medical documents
+  - Separate key per user for maximum security
+  - Key rotation every 6 months
+}
+```
+
+### Backup Strategy
+```
+backup_schedule {
+  - Full backup: Weekly
+  - Incremental backup: Daily
+  - Real-time replication for critical data
+  - Point-in-time recovery capability
+  - Encrypted backup storage
+}
+```
+
+---
+
+## 🔒 SECURITY CONSIDERATIONS
+
+### Data Encryption
+- All passwords: bcrypt with salt rounds ≥ 12
+- Sensitive documents: AES-256 encryption
+- JWT tokens: RS256 with key rotation
+- Database connections: TLS 1.3
+
+### PII (Personally Identifiable Information)
+- All user data considered PII
+- Encryption at rest and in transit
+- Access logging for compliance
+- Data anonymization for analytics
+
+### Compliance Requirements
+- HIPAA compliance for health data
+- GDPR compliance for EU users
+- Data retention policies
+- Right to be forgotten implementation
+
+---
+
+TOTAL TABLES: 35 tables covering all aspects of the Swasthwrap platform
+ESTIMATED DATABASE SIZE: 10-50GB for 100k active users

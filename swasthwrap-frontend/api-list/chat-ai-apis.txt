@@ -1,0 +1,132 @@
+CHAT & AI APIS FOR SWASTHWRAP FRONTEND
+=============================================
+
+1. SEND MESSAGE TO AI
+   Method: POST
+   Endpoint: /api/chat/message
+   Purpose: Send user message to AI and get response
+   Headers: Authorization: Bearer <token>
+   Request Body:
+   {
+     "message": "string",
+     "language": "en|hi|ta",
+     "sessionId": "string (optional)",
+     "files": [
+       {
+         "name": "string",
+         "size": "number",
+         "type": "string",
+         "data": "base64 string"
+       }
+     ]
+   }
+   Response:
+   {
+     "data": {
+       "content": "AI response text",
+       "confidence": "number (0-1)",
+       "sources": ["Medical Database", "Health Guidelines"],
+       "suggestions": ["string array of suggestions"],
+       "sessionId": "string"
+     },
+     "success": "boolean"
+   }
+
+2. GET CHAT HISTORY
+   Method: GET
+   Endpoint: /api/chat/history
+   Purpose: Get paginated list of user's chat sessions
+   Headers: Authorization: Bearer <token>
+   Query Parameters:
+   - page: number (default: 1)
+   - limit: number (default: 10)
+   Response:
+   {
+     "data": [
+       {
+         "id": "number",
+         "date": "YYYY-MM-DD",
+         "title": "string",
+         "summary": "string",
+         "messages": "number",
+         "language": "string",
+         "tags": ["string array"],
+         "bookmark": "boolean",
+         "duration": "string"
+       }
+     ],
+     "total": "number",
+     "page": "number", 
+     "limit": "number",
+     "hasMore": "boolean"
+   }
+
+3. GET CHAT SESSION MESSAGES
+   Method: GET
+   Endpoint: /api/chat/session/{sessionId}
+   Purpose: Get all messages from a specific chat session
+   Headers: Authorization: Bearer <token>
+   Response:
+   {
+     "data": [
+       {
+         "id": "number",
+         "type": "user|ai",
+         "content": "string",
+         "timestamp": "ISO date string",
+         "language": "string",
+         "hasFile": "boolean (optional)"
+       }
+     ],
+     "success": "boolean"
+   }
+
+4. DELETE CHAT SESSION
+   Method: DELETE
+   Endpoint: /api/chat/session/{sessionId}
+   Purpose: Delete a specific chat session
+   Headers: Authorization: Bearer <token>
+   Response:
+   {
+     "success": "boolean",
+     "message": "string"
+   }
+
+5. BOOKMARK CHAT SESSION
+   Method: PUT
+   Endpoint: /api/chat/session/{sessionId}/bookmark
+   Purpose: Toggle bookmark status of a chat session
+   Headers: Authorization: Bearer <token>
+   Request Body:
+   {
+     "bookmark": "boolean"
+   }
+   Response:
+   {
+     "success": "boolean",
+     "message": "string"
+   }
+
+6. SEARCH CHAT HISTORY
+   Method: GET
+   Endpoint: /api/chat/search
+   Purpose: Search through chat history
+   Headers: Authorization: Bearer <token>
+   Query Parameters:
+   - query: string (search term)
+   - language: string (optional filter)
+   - dateFrom: YYYY-MM-DD (optional)
+   - dateTo: YYYY-MM-DD (optional)
+   Response:
+   {
+     "data": [
+       {
+         "sessionId": "number",
+         "messageId": "number",
+         "content": "string",
+         "timestamp": "string",
+         "relevance": "number"
+       }
+     ],
+     "total": "number"
+   }

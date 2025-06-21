@@ -1,0 +1,232 @@
+NOTIFICATION & EMERGENCY APIS FOR SWASTHWRAP FRONTEND
+========================================================
+
+1. GET NOTIFICATIONS
+   Method: GET
+   Endpoint: /api/notifications
+   Purpose: Get user's notifications
+   Headers: Authorization: Bearer <token>
+   Query Parameters:
+   - status: string (optional: "read|unread|all")
+   - type: string (optional: "medication|appointment|health|system")
+   - page: number (default: 1)
+   - limit: number (default: 20)
+   Response:
+   {
+     "data": [
+       {
+         "id": "number",
+         "type": "medication|appointment|health|system|emergency",
+         "title": "string",
+         "message": "string",
+         "priority": "low|medium|high|urgent",
+         "read": "boolean",
+         "createdAt": "ISO date string",
+         "actionUrl": "string (optional)",
+         "metadata": "object (optional)"
+       }
+     ],
+     "total": "number",
+     "page": "number",
+     "limit": "number",
+     "hasMore": "boolean"
+   }
+
+2. MARK NOTIFICATION AS READ
+   Method: PUT
+   Endpoint: /api/notifications/{notificationId}/read
+   Purpose: Mark a notification as read
+   Headers: Authorization: Bearer <token>
+   Response:
+   {
+     "success": "boolean"
+   }
+
+3. MARK ALL NOTIFICATIONS AS READ
+   Method: PUT
+   Endpoint: /api/notifications/read-all
+   Purpose: Mark all notifications as read
+   Headers: Authorization: Bearer <token>
+   Response:
+   {
+     "success": "boolean",
+     "message": "string"
+   }
+
+4. DELETE NOTIFICATION
+   Method: DELETE
+   Endpoint: /api/notifications/{notificationId}
+   Purpose: Delete a notification
+   Headers: Authorization: Bearer <token>
+   Response:
+   {
+     "success": "boolean"
+   }
+
+5. UPDATE NOTIFICATION PREFERENCES
+   Method: PUT
+   Endpoint: /api/notifications/preferences
+   Purpose: Update notification preferences
+   Headers: Authorization: Bearer <token>
+   Request Body:
+   {
+     "types": {
+       "medication": {
+         "push": "boolean",
+         "email": "boolean",
+         "sms": "boolean"
+       },
+       "appointment": {
+         "push": "boolean", 
+         "email": "boolean",
+         "sms": "boolean"
+       },
+       "health": {
+         "push": "boolean",
+         "email": "boolean"
+       },
+       "emergency": {
+         "push": "boolean",
+         "sms": "boolean"
+       }
+     },
+     "quietHours": {
+       "enabled": "boolean",
+       "start": "HH:MM",
+       "end": "HH:MM"
+     }
+   }
+   Response:
+   {
+     "success": "boolean",
+     "message": "string"
+   }
+
+6. SEND EMERGENCY ALERT
+   Method: POST
+   Endpoint: /api/emergency/alert
+   Purpose: Send emergency alert to emergency contacts
+   Headers: Authorization: Bearer <token>
+   Request Body:
+   {
+     "type": "medical|fall|panic|custom",
+     "message": "string (optional)",
+     "location": {
+       "latitude": "number",
+       "longitude": "number",
+       "address": "string (optional)"
+     },
+     "vitals": {
+       "heartRate": "number (optional)",
+       "bloodPressure": "string (optional)",
+       "other": "object (optional)"
+     }
+   }
+   Response:
+   {
+     "data": {
+       "alertId": "string",
+       "sentTo": ["emergency contact array"],
+       "timestamp": "ISO date string"
+     },
+     "success": "boolean",
+     "message": "string"
+   }
+
+7. GET EMERGENCY CONTACTS
+   Method: GET
+   Endpoint: /api/emergency/contacts
+   Purpose: Get emergency contacts list
+   Headers: Authorization: Bearer <token>
+   Response:
+   {
+     "data": [
+       {
+         "id": "number",
+         "name": "string",
+         "relationship": "string",
+         "phone": "string",
+         "email": "string (optional)",
+         "priority": "number (1-5)",
+         "canReceiveAlerts": "boolean"
+       }
+     ],
+     "success": "boolean"
+   }
+
+8. ADD EMERGENCY CONTACT
+   Method: POST
+   Endpoint: /api/emergency/contacts
+   Purpose: Add emergency contact
+   Headers: Authorization: Bearer <token>
+   Request Body:
+   {
+     "name": "string",
+     "relationship": "string",
+     "phone": "string",
+     "email": "string (optional)",
+     "priority": "number",
+     "canReceiveAlerts": "boolean"
+   }
+   Response:
+   {
+     "data": "new contact object",
+     "success": "boolean",
+     "message": "string"
+   }
+
+9. UPDATE EMERGENCY CONTACT
+   Method: PUT
+   Endpoint: /api/emergency/contacts/{contactId}
+   Purpose: Update emergency contact details
+   Headers: Authorization: Bearer <token>
+   Request Body:
+   {
+     "name": "string (optional)",
+     "relationship": "string (optional)",
+     "phone": "string (optional)",
+     "email": "string (optional)",
+     "priority": "number (optional)",
+     "canReceiveAlerts": "boolean (optional)"
+   }
+   Response:
+   {
+     "data": "updated contact object",
+     "success": "boolean",
+     "message": "string"
+   }
+
+10. DELETE EMERGENCY CONTACT
+    Method: DELETE
+    Endpoint: /api/emergency/contacts/{contactId}
+    Purpose: Delete emergency contact
+    Headers: Authorization: Bearer <token>
+    Response:
+    {
+      "success": "boolean",
+      "message": "string"
+    }
+
+11. GET EMERGENCY ALERT HISTORY
+    Method: GET
+    Endpoint: /api/emergency/alerts
+    Purpose: Get history of emergency alerts sent
+    Headers: Authorization: Bearer <token>
+    Query Parameters:
+    - from: YYYY-MM-DD (optional)
+    - to: YYYY-MM-DD (optional)
+    Response:
+    {
+      "data": [
+        {
+          "id": "string",
+          "type": "string",
+          "message": "string",
+          "sentAt": "ISO date string",
+          "sentTo": ["contact array"],
+          "resolved": "boolean",
+          "resolvedAt": "ISO date string (optional)"
+        }
+      ],
+      "success": "boolean"
+    }

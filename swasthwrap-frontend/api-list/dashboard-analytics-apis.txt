@@ -1,0 +1,156 @@
+DASHBOARD & ANALYTICS APIS FOR SWASTHWRAP FRONTEND
+====================================================
+
+1. GET DASHBOARD STATS
+   Method: GET
+   Endpoint: /api/dashboard/stats
+   Purpose: Get main dashboard statistics and overview
+   Headers: Authorization: Bearer <token>
+   Response:
+   {
+     "data": {
+       "totalReports": "number",
+       "chatSessions": "number", 
+       "healthGoalsAchieved": "number",
+       "medicationsTracked": "number",
+       "healthScore": "number",
+       "streak": "number",
+       "upcomingAppointments": "number",
+       "medicationsDue": "number"
+     },
+     "success": "boolean"
+   }
+
+2. GET RECENT ACTIVITY
+   Method: GET
+   Endpoint: /api/dashboard/activity
+   Purpose: Get user's recent activity feed
+   Headers: Authorization: Bearer <token>
+   Query Parameters:
+   - limit: number (default: 10)
+   Response:
+   {
+     "data": [
+       {
+         "type": "chat|upload|medication|goal|appointment",
+         "content": "string",
+         "time": "relative time string",
+         "icon": "string",
+         "timestamp": "ISO date string"
+       }
+     ],
+     "success": "boolean"
+   }
+
+3. GET UPCOMING REMINDERS
+   Method: GET
+   Endpoint: /api/dashboard/reminders
+   Purpose: Get upcoming reminders and notifications
+   Headers: Authorization: Bearer <token>
+   Response:
+   {
+     "data": [
+       {
+         "type": "appointment|medication|checkup",
+         "title": "string",
+         "time": "formatted time string",
+         "urgent": "boolean",
+         "timestamp": "ISO date string"
+       }
+     ],
+     "success": "boolean"
+   }
+
+4. GET HEALTH TIPS
+   Method: GET
+   Endpoint: /api/dashboard/health-tips
+   Purpose: Get personalized health tips
+   Headers: Authorization: Bearer <token>
+   Query Parameters:
+   - language: string (en|hi|ta)
+   - category: string (optional)
+   Response:
+   {
+     "data": [
+       {
+         "id": "number",
+         "en": "string",
+         "hi": "string", 
+         "ta": "string",
+         "category": "string",
+         "priority": "number"
+       }
+     ],
+     "success": "boolean"
+   }
+
+5. MARK REMINDER AS COMPLETED
+   Method: PUT
+   Endpoint: /api/dashboard/reminders/{reminderId}/complete
+   Purpose: Mark a reminder as completed
+   Headers: Authorization: Bearer <token>
+   Response:
+   {
+     "success": "boolean",
+     "message": "string"
+   }
+
+6. GET HEALTH ANALYTICS
+   Method: GET
+   Endpoint: /api/analytics/health-trends
+   Purpose: Get health trends and analytics data
+   Headers: Authorization: Bearer <token>
+   Query Parameters:
+   - period: string (week|month|quarter|year)
+   - metrics: string[] (optional filter)
+   Response:
+   {
+     "data": {
+       "healthScore": {
+         "current": "number",
+         "trend": "up|down|stable",
+         "change": "number"
+       },
+       "metrics": [
+         {
+           "type": "string",
+           "data": [
+             {
+               "date": "YYYY-MM-DD",
+               "value": "number"
+             }
+           ],
+           "trend": "string",
+           "average": "number"
+         }
+       ]
+     },
+     "success": "boolean"
+   }
+
+7. GET MEDICATION ADHERENCE
+   Method: GET
+   Endpoint: /api/analytics/medication-adherence
+   Purpose: Get medication adherence statistics
+   Headers: Authorization: Bearer <token>
+   Query Parameters:
+   - period: string (week|month|quarter)
+   Response:
+   {
+     "data": {
+       "overallAdherence": "number (percentage)",
+       "medications": [
+         {
+           "name": "string",
+           "adherence": "number",
+           "missed": "number",
+           "taken": "number"
+         }
+       ],
+       "streaks": {
+         "current": "number",
+         "longest": "number"
+       }
+     },
+     "success": "boolean"
+   }

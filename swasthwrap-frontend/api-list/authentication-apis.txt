@@ -1,0 +1,159 @@
+AUTHENTICATION APIS FOR SWASTHWRAP FRONTEND
+==================================================
+
+1. USER LOGIN
+   Method: POST
+   Endpoint: /api/auth/login
+   Purpose: Authenticate user with email and password
+   Request Body:
+   {
+     "email": "string",
+     "password": "string"
+   }
+   Response:
+   {
+     "data": {
+       "id": "string",
+       "name": "string", 
+       "email": "string",
+       "language": "en|hi|ta",
+       "interests": ["string array"],
+       "healthScore": "number",
+       "streak": "number",
+       "upcomingAppointments": "number",
+       "medicationsDue": "number",
+       "avatar": "string (optional)",
+       "token": "JWT string"
+     },
+     "success": "boolean",
+     "message": "string"
+   }
+
+2. USER REGISTRATION
+   Method: POST
+   Endpoint: /api/auth/register
+   Purpose: Register new user account
+   Request Body:
+   {
+     "name": "string",
+     "email": "string", 
+     "password": "string",
+     "language": "en|hi|ta",
+     "interests": ["diabetes", "heart", "etc"]
+   }
+   Response:
+   {
+     "data": {
+       "id": "string",
+       "name": "string",
+       "email": "string", 
+       "language": "string",
+       "interests": ["string array"],
+       "healthScore": "number",
+       "streak": "number",
+       "upcomingAppointments": "number",
+       "medicationsDue": "number",
+       "token": "JWT string"
+     },
+     "success": "boolean",
+     "message": "string"
+   }
+
+3. GET CURRENT USER
+   Method: GET
+   Endpoint: /api/auth/me
+   Purpose: Get current authenticated user details
+   Headers: Authorization: Bearer <token>
+   Response:
+   {
+     "data": {
+       "id": "string",
+       "name": "string",
+       "email": "string",
+       "language": "string", 
+       "interests": ["string array"],
+       "healthScore": "number",
+       "streak": "number",
+       "upcomingAppointments": "number",
+       "medicationsDue": "number",
+       "avatar": "string (optional)",
+       "phone": "string (optional)",
+       "dateOfBirth": "string (optional)",
+       "gender": "string (optional)",
+       "bloodGroup": "string (optional)",
+       "address": "string (optional)",
+       "emergencyContact": {
+         "name": "string",
+         "relationship": "string", 
+         "phone": "string"
+       }
+     },
+     "success": "boolean"
+   }
+
+4. UPDATE USER PROFILE
+   Method: PUT
+   Endpoint: /api/auth/profile
+   Purpose: Update user profile information
+   Headers: Authorization: Bearer <token>
+   Request Body:
+   {
+     "name": "string (optional)",
+     "email": "string (optional)",
+     "phone": "string (optional)",
+     "dateOfBirth": "string (optional)",
+     "gender": "string (optional)",
+     "bloodGroup": "string (optional)",
+     "address": "string (optional)",
+     "emergencyContact": {
+       "name": "string",
+       "relationship": "string",
+       "phone": "string"
+     }
+   }
+   Response:
+   {
+     "data": "updated user object",
+     "success": "boolean",
+     "message": "string"
+   }
+
+5. LOGOUT
+   Method: POST
+   Endpoint: /api/auth/logout
+   Purpose: Logout user and invalidate token
+   Headers: Authorization: Bearer <token>
+   Response:
+   {
+     "success": "boolean",
+     "message": "string"
+   }
+
+6. FORGOT PASSWORD
+   Method: POST
+   Endpoint: /api/auth/forgot-password
+   Purpose: Send password reset email
+   Request Body:
+   {
+     "email": "string"
+   }
+   Response:
+   {
+     "success": "boolean",
+     "message": "string"
+   }
+
+7. RESET PASSWORD
+   Method: POST
+   Endpoint: /api/auth/reset-password
+   Purpose: Reset password using reset token
+   Request Body:
+   {
+     "token": "string",
+     "newPassword": "string"
+   }
+   Response:
+   {
+     "success": "boolean",
+     "message": "string"
+   }
