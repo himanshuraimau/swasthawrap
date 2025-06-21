@@ -221,3 +221,31 @@ export interface AIResponse {
   sources?: string[]
   suggestions?: string[]
 }
+
+export interface LoginRequest {
+  email: string
+  password: string
+}
+
+export interface RegisterRequest {
+  name: string
+  email: string
+  password: string
+  language: string
+  interests: string[]
+}
+
+export interface UpdateProfileRequest {
+  name?: string
+  email?: string
+  phone?: string
+  dateOfBirth?: string
+  gender?: string
+  bloodGroup?: string
+  address?: string
+  emergencyContact?: {
+    name: string
+    relationship: string
+    phone: string
+  }
+}

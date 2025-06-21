@@ -1,15 +1,16 @@
 "use client"
 
 import { useAuthStore } from "@/store"
-import { useLogin, useRegister, useUpdateProfile, useCurrentUser } from "../queries/auth"
+import { useLogin, useRegister, useUpdateProfile, useCurrentUser, useLogout } from "../queries/auth"
 import type { LoginRequest, RegisterRequest, UpdateProfileRequest } from "@/types"
 
 export function useAuth() {
-  const { user, isAuthenticated, logout, setLoading } = useAuthStore()
+  const { user, isAuthenticated, logout: storeLogout, setLoading } = useAuthStore()
 
   const loginMutation = useLogin()
   const registerMutation = useRegister()
   const updateProfileMutation = useUpdateProfile()
+  const logoutMutation = useLogout()
   const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser()
 
   const handleLogin = async (credentials: LoginRequest) => {
@@ -35,15 +36,13 @@ export function useAuth() {
   }
 
   const handleLogout = () => {
-    logout()
-    // Clear all queries
-    window.location.reload()
+    logoutMutation.mutate()
   }
 
   return {
-    user: user || currentUser?.data,
+    user: user || currentUser,
     isAuthenticated,
-    isLoading: isLoadingUser || loginMutation.isPending || registerMutation.isPending,
+    isLoading: isLoadingUser || loginMutation.isPending || registerMutation.isPending || logoutMutation.isPending,
     login: handleLogin,
     register: handleRegister,
     updateProfile: handleUpdateProfile,

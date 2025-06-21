@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { Heart, Activity, Pill, Stethoscope } from "lucide-react"
-import LoginForm from "@/components/login-form"
+import AuthForm from "@/components/auth-form"
+import { useAuth } from "@/lib/react-query/hooks/useAuth"
 
 const healthTips = [
   {
@@ -22,6 +23,7 @@ const languages = [
 ]
 
 export default function HomePage() {
+  const { isAuthenticated } = useAuth()
   const [currentTip, setCurrentTip] = useState(0)
   const [currentLang, setCurrentLang] = useState(0)
   const [showLogin, setShowLogin] = useState(false)
@@ -53,8 +55,9 @@ export default function HomePage() {
     { Icon: Stethoscope, delay: 1.5, x: 85, y: 80 },
   ]
 
-  if (showLogin) {
-    return <LoginForm />
+  // If user is authenticated or should show login, show auth form
+  if (isAuthenticated || showLogin) {
+    return <AuthForm />
   }
 
   return (

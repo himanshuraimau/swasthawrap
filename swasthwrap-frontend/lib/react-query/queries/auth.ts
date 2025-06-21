@@ -1,83 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import type { LoginRequest, RegisterRequest, UpdateProfileRequest, User, ApiResponse } from "@/types"
 import { useAuthStore } from "@/store"
-
-// Mock API functions (replace with actual API calls)
-const authAPI = {
-  login: async (credentials: LoginRequest): Promise<ApiResponse<User>> => {
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-
-    // Mock user data
-    const mockUsers = [
-      {
-        id: "1",
-        name: "Demo User",
-        email: "demo@swasthwrap.com",
-        language: "en" as const,
-        interests: ["diabetes", "heart"],
-        healthScore: 85,
-        streak: 10,
-        upcomingAppointments: 2,
-        medicationsDue: 1,
-      },
-    ]
-
-    const user = mockUsers.find((u) => u.email === credentials.email)
-
-    if (user) {
-      return { data: user, success: true, message: "Login successful" }
-    } else {
-      throw new Error("Invalid credentials")
-    }
-  },
-
-  register: async (userData: RegisterRequest): Promise<ApiResponse<User>> => {
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-
-    const newUser: User = {
-      id: Date.now().toString(),
-      ...userData,
-      healthScore: Math.floor(Math.random() * 25) + 70,
-      streak: 0,
-      upcomingAppointments: 0,
-      medicationsDue: 0,
-    }
-
-    return { data: newUser, success: true, message: "Registration successful" }
-  },
-
-  updateProfile: async (updates: UpdateProfileRequest): Promise<ApiResponse<User>> => {
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    // Mock updated user
-    const updatedUser: User = {
-      id: "1",
-      name: updates.name || "Demo User",
-      email: updates.email || "demo@swasthwrap.com",
-      language: "en",
-      interests: ["diabetes", "heart"],
-      healthScore: 85,
-      streak: 10,
-      upcomingAppointments: 2,
-      medicationsDue: 1,
-      ...updates,
-    }
-
-    return { data: updatedUser, success: true, message: "Profile updated successfully" }
-  },
-
-  getCurrentUser: async (): Promise<ApiResponse<User>> => {
-    await new Promise((resolve) => setTimeout(resolve, 500))
-
-    const storedUser = localStorage.getItem("swasthwrap_user")
-    if (storedUser) {
-      return { data: JSON.parse(storedUser), success: true }
-    }
-
-    throw new Error("No user found")
-  },
-}
+import { apiClient } from "@/lib/api"
 
 // Query keys
 export const authKeys = {
@@ -90,11 +14,15 @@ export const useLogin = () => {
   const { login } = useAuthStore()
   const queryClient = useQueryClient()
 
-  return useMutation({
-    mutationFn: authAPI.login,
+  return useMutation<ApiResponse<User & { token: string }>, Error, LoginRequest>({
+    mutationFn: apiClient.login.bind(apiClient),
     onSuccess: (response) => {
-      login(response.data)
-      queryClient.setQueryData(authKeys.user(), response.data)
+      if (response.success && response.data) {
+        // Remove token from user data before storing in state
+        const { token, ...userData } = response.data
+        login(userData)
+        queryClient.setQueryData(authKeys.user(), userData)
+      }
     },
     onError: (error) => {
       console.error("Login failed:", error)
@@ -106,11 +34,15 @@ export const useRegister = () => {
   const { login } = useAuthStore()
   const queryClient = useQueryClient()
 
-  return useMutation({
-    mutationFn: authAPI.register,
+  return useMutation<ApiResponse<User & { token: string }>, Error, RegisterRequest>({
+    mutationFn: apiClient.register.bind(apiClient),
     onSuccess: (response) => {
-      login(response.data)
-      queryClient.setQueryData(authKeys.user(), response.data)
+      if (response.success && response.data) {
+        // Remove token from user data before storing in state
+        const { token, ...userData } = response.data
+        login(userData)
+        queryClient.setQueryData(authKeys.user(), userData)
+      }
     },
     onError: (error) => {
       console.error("Registration failed:", error)
@@ -122,11 +54,13 @@ export const useUpdateProfile = () => {
   const { updateUser } = useAuthStore()
   const queryClient = useQueryClient()
 
-  return useMutation({
-    mutationFn: authAPI.updateProfile,
+  return useMutation<ApiResponse<User>, Error, UpdateProfileRequest>({
+    mutationFn: apiClient.updateProfile.bind(apiClient),
     onSuccess: (response) => {
-      updateUser(response.data)
-      queryClient.setQueryData(authKeys.user(), response.data)
+      if (response.success && response.data) {
+        updateUser(response.data)
+        queryClient.setQueryData(authKeys.user(), response.data)
+      }
     },
     onError: (error) => {
       console.error("Profile update failed:", error)
@@ -137,11 +71,31 @@ export const useUpdateProfile = () => {
 export const useCurrentUser = () => {
   const { user, isAuthenticated } = useAuthStore()
 
-  return useQuery({
+  return useQuery<ApiResponse<User>, Error, User>({
     queryKey: authKeys.user(),
-    queryFn: authAPI.getCurrentUser,
+    queryFn: apiClient.getCurrentUser.bind(apiClient),
     enabled: isAuthenticated && !user,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: false,
+    select: (response) => response.data,
+  })
+}
+
+export const useLogout = () => {
+  const { logout } = useAuthStore()
+  const queryClient = useQueryClient()
+
+  return useMutation<ApiResponse<void>, Error, void>({
+    mutationFn: apiClient.logout.bind(apiClient),
+    onSuccess: () => {
+      logout()
+      queryClient.clear()
+    },
+    onError: (error) => {
+      console.error("Logout failed:", error)
+      // Even if logout fails on server, clear local state
+      logout()
+      queryClient.clear()
+    },
   })
 }
