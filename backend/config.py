@@ -8,11 +8,11 @@ load_dotenv()
 
 class Settings(BaseSettings):
     # Database
-    mongodb_url: str = os.getenv("MONGODB_URL", "mongodb+srv://enghimanshu:enghimanshu@cluster0.vd8qblh.mongodb.net/")
+    mongodb_url: str = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
     database_name: str = os.getenv("DATABASE_NAME", "swasthwrap")
     
     # OpenAI
-    openai_api_key: str = os.getenv("OPENAI_API_KEY", "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")
+    openai_api_key: str = os.getenv("OPENAI_API_KEY", "your_openai_api_key_here")
     
     # JWT
     secret_key: str = os.getenv("SECRET_KEY", "your_secret_key_here")
