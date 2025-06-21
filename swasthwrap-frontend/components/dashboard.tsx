@@ -328,7 +328,7 @@ export default function Dashboard({ user }) {
       hi: hour < 12 ? "सुप्रभात" : hour < 17 ? "नमस्कार" : "शुभ संध्या",
       ta: hour < 12 ? "காலை வணக்கம்" : hour < 17 ? "மதிய வணக்கம்" : "மாலை வணக்கம்",
     }
-    return greetings[user.language] || greetings.en
+    return greetings[user.language as keyof typeof greetings] || greetings.en
   }
 
   return (
@@ -410,73 +410,10 @@ export default function Dashboard({ user }) {
         </div>
       </motion.div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <motion.header
-          initial={{ y: -50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="bg-gradient-to-r from-[#262626] via-[#2A2A2A] to-[#262626] border-b border-[#404040]/30 backdrop-blur-xl"
-        >
-          <div className="p-8">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-[#A3A3A3] bg-clip-text text-transparent">
-                  {getGreeting()}, {user.name.split(" ")[0]}!
-                </h1>
-                <p className="text-[#A3A3A3] mt-2 text-lg">
-                  {new Date().toLocaleDateString("en-US", {
-                    weekday: "long",
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </p>
-              </div>
-
-              <div className="flex items-center space-x-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="bg-gradient-to-r from-[#1F1F1F] to-[#262626] border-[#404040] text-[#A3A3A3] hover:border-[#3ECF8E] hover:text-white relative rounded-2xl h-12 px-6 transition-all duration-300"
-                >
-                  <Bell size={18} />
-                  {notifications > 0 && (
-                    <div className="absolute -top-2 -right-2 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold shadow-lg">
-                      {notifications}
-                    </div>
-                  )}
-                </Button>
-              </div>
-            </div>
-
-            {/* Health Tip with Modern Design */}
-            <motion.div
-              key={currentTip}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1F1F1F] via-[#262626] to-[#1F1F1F] border border-[#3ECF8E]/20 p-6"
-            >
-              <div className="absolute top-0 right-0 w-24 h-24 bg-[#3ECF8E]/5 rounded-full blur-2xl" />
-              <div className="relative z-10 flex items-start space-x-4">
-                <div className="w-12 h-12 rounded-2xl bg-[#3ECF8E]/10 flex items-center justify-center text-2xl">
-                  💡
-                </div>
-                <div className="flex-1">
-                  <p className="text-[#3ECF8E] text-sm font-semibold mb-2">Today's Health Tip</p>
-                  <p className="text-white text-base leading-relaxed">
-                    {mockDashboardData.healthTips[currentTip][user.language] ||
-                      mockDashboardData.healthTips[currentTip].en}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </motion.header>
+     
 
         {/* Dashboard Content */}
         <main className="flex-1 p-6 overflow-auto">{renderContent()}</main>
       </div>
-    </div>
   )
 }
