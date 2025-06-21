@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query # type: ignore
 from typing import Optional, List
 from controllers.analytics_controller import AnalyticsController
 from middlewares.auth import get_current_user

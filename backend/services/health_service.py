@@ -1,10 +1,10 @@
 from typing import Optional, List, Dict, Any, Union
 from datetime import datetime, date
-from bson import ObjectId
+from bson import ObjectId # type: ignore
 import logging
 import os
 import uuid
-from fastapi import UploadFile
+from fastapi import UploadFile # type: ignore
 
 from models.health import (
     MedicalCondition, MedicalConditionCreate, MedicalConditionUpdate, MedicalConditionResponse,
@@ -22,7 +22,7 @@ class HealthService:
     
     async def _get_collections(self):
         """Get database collections."""
-        db = get_database()
+        db = await get_database()
         return {
             'medical_conditions': db.medical_conditions,
             'health_metrics': db.health_metrics,

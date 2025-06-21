@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request # type: ignore
 from controllers.auth_controller import auth_controller
 from middlewares.auth import get_current_user
 from models.user import (

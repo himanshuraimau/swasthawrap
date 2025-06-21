@@ -1,5 +1,5 @@
-CHAT & AI APIS FOR SWASTHWRAP FRONTEND
-=============================================
+CHAT & AI APIS FOR SWASTHWRAP FRONTEND (SIMPLIFIED)
+=======================================================
 
 1. SEND MESSAGE TO AI
    Method: POST
@@ -25,8 +25,6 @@ CHAT & AI APIS FOR SWASTHWRAP FRONTEND
      "data": {
        "content": "AI response text",
        "confidence": "number (0-1)",
-       "sources": ["Medical Database", "Health Guidelines"],
-       "suggestions": ["string array of suggestions"],
        "sessionId": "string"
      },
      "success": "boolean"
@@ -35,7 +33,7 @@ CHAT & AI APIS FOR SWASTHWRAP FRONTEND
 2. GET CHAT HISTORY
    Method: GET
    Endpoint: /api/chat/history
-   Purpose: Get paginated list of user's chat sessions
+   Purpose: Get simple list of user's chat sessions
    Headers: Authorization: Bearer <token>
    Query Parameters:
    - page: number (default: 1)
@@ -44,21 +42,16 @@ CHAT & AI APIS FOR SWASTHWRAP FRONTEND
    {
      "data": [
        {
-         "id": "number",
+         "id": "string",
          "date": "YYYY-MM-DD",
          "title": "string",
-         "summary": "string",
-         "messages": "number",
          "language": "string",
-         "tags": ["string array"],
-         "bookmark": "boolean",
-         "duration": "string"
+         "messageCount": "number"
        }
      ],
      "total": "number",
      "page": "number", 
-     "limit": "number",
-     "hasMore": "boolean"
+     "limit": "number"
    }
 
 3. GET CHAT SESSION MESSAGES
@@ -70,7 +63,7 @@ CHAT & AI APIS FOR SWASTHWRAP FRONTEND
    {
      "data": [
        {
-         "id": "number",
+         "id": "string",
          "type": "user|ai",
          "content": "string",
          "timestamp": "ISO date string",
@@ -92,41 +85,94 @@ CHAT & AI APIS FOR SWASTHWRAP FRONTEND
      "message": "string"
    }
 
-5. BOOKMARK CHAT SESSION
-   Method: PUT
-   Endpoint: /api/chat/session/{sessionId}/bookmark
-   Purpose: Toggle bookmark status of a chat session
-   Headers: Authorization: Bearer <token>
-   Request Body:
+5. UPLOAD CHAT DOCUMENT
+   Method: POST
+   Endpoint: /api/chat/upload
+   Purpose: Upload document file to be used in chat
+   Headers: Authorization: Bearer <token>, Content-Type: multipart/form-data
+   Request Body: FormData with file
+   Response:
    {
-     "bookmark": "boolean"
+     "data": {
+       "fileId": "string",
+       "fileName": "string",
+       "fileSize": "number",
+       "fileType": "string",
+       "fileUrl": "string"
+     },
+     "success": "boolean"
    }
+
+6. DELETE CHAT DOCUMENT
+   Method: DELETE
+   Endpoint: /api/chat/document/{fileId}
+   Purpose: Delete uploaded document
+   Headers: Authorization: Bearer <token>
    Response:
    {
      "success": "boolean",
      "message": "string"
    }
 
-6. SEARCH CHAT HISTORY
-   Method: GET
-   Endpoint: /api/chat/search
-   Purpose: Search through chat history
-   Headers: Authorization: Bearer <token>
-   Query Parameters:
-   - query: string (search term)
-   - language: string (optional filter)
-   - dateFrom: YYYY-MM-DD (optional)
-   - dateTo: YYYY-MM-DD (optional)
+7. VOICE TO TEXT
+   Method: POST
+   Endpoint: /api/chat/voice-to-text
+   Purpose: Convert voice recording to text
+   Headers: Authorization: Bearer <token>, Content-Type: multipart/form-data
+   Request Body: FormData with audio file
+   {
+     "audio": "file (mp3, wav, m4a)",
+     "language": "en|hi|ta"
+   }
    Response:
    {
-     "data": [
-       {
-         "sessionId": "number",
-         "messageId": "number",
+     "data": {
+       "text": "string",
+       "confidence": "number (0-1)",
+       "language": "string"
+     },
+     "success": "boolean"
+   }
+
+8. TEXT TO SPEECH
+   Method: POST
+   Endpoint: /api/chat/text-to-speech
+   Purpose: Convert text to speech audio
+   Headers: Authorization: Bearer <token>
+   Request Body:
+   {
+     "text": "string",
+     "language": "en|hi|ta",
+     "voice": "string (optional)",
+     "speed": "number (0.5-2.0) default: 1.0"
+   }
+   Response:
+   {
+     "data": {
+       "audioUrl": "string",
+       "duration": "number (seconds)"
+     },
+     "success": "boolean"
+   }
+
+9. START NEW CHAT SESSION
+   Method: POST
+   Endpoint: /api/chat/session/new
+   Purpose: Start a new chat session
+   Headers: Authorization: Bearer <token>
+   Request Body:
+   {
+     "language": "en|hi|ta"
+   }
+   Response:
+   {
+     "data": {
+       "sessionId": "string",
+       "greeting": {
          "content": "string",
-         "timestamp": "string",
-         "relevance": "number"
+         "language": "string",
+         "messageId": "string"
        }
-     ],
-     "total": "number"
+     },
+     "success": "boolean"
    }

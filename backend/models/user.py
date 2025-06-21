@@ -1,25 +1,8 @@
-from pydantic import BaseModel, Field, EmailStr, validator
-from typing import List, Optional, Literal
+from pydantic import BaseModel, Field, EmailStr
+from typing import List, Optional, Literal, Any, Union
 from datetime import datetime, date
-from bson import ObjectId
+from bson import ObjectId # type: ignore
 from enum import Enum
-
-
-class PyObjectId(ObjectId):
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
-
-    @classmethod
-    def validate(cls, v):
-        if not ObjectId.is_valid(v):
-            raise ValueError("Invalid objectid")
-        return ObjectId(v)
-
-    @classmethod
-    def __get_pydantic_json_schema__(cls, field_schema):
-        field_schema.update(type="string")
-        return field_schema
 
 
 class LanguageEnum(str, Enum):
@@ -65,7 +48,7 @@ class UserProfile(BaseModel):
 
 
 class User(BaseModel):
-    id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
+    id: Optional[str] = Field(default=None, alias="_id")
     name: str
     email: EmailStr
     password_hash: str
@@ -88,7 +71,7 @@ class User(BaseModel):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     
     class Config:
-        validate_by_name = True
+        populate_by_name = True
         arbitrary_types_allowed = True
         json_encoders = {
             ObjectId: str,
@@ -121,7 +104,7 @@ class UserResponseWithToken(UserResponse):
 
 
 class PasswordReset(BaseModel):
-    id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
+    id: Optional[str] = Field(default=None, alias="_id")
     email: EmailStr
     token: str
     expires_at: datetime
@@ -129,13 +112,13 @@ class PasswordReset(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     
     class Config:
-        validate_by_name = True
+        populate_by_name = True
         arbitrary_types_allowed = True
         json_encoders = {ObjectId: str}
 
 
 class UserSession(BaseModel):
-    id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
+    id: Optional[str] = Field(default=None, alias="_id")
     user_id: str
     session_token: str
     device_info: Optional[str] = None
@@ -147,7 +130,7 @@ class UserSession(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     
     class Config:
-        validate_by_name = True
+        populate_by_name = True
         arbitrary_types_allowed = True
         json_encoders = {ObjectId: str}
 

@@ -19,10 +19,11 @@ import {
   LogOut,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import AIChatbot from "./ai-chatbot"
+import AIChatbot from "./modern-ai-chatbot"
 import MedicalHistory from "./medical-history"
 import HealthProfile from "./health-profile"
 import Settings from "./settings"
+import { useAuth } from "@/lib/react-query/hooks/useAuth"
 
 const mockDashboardData = {
   healthTips: [
@@ -57,7 +58,10 @@ const navigationItems = [
   { icon: SettingsIcon, label: "Settings", id: "settings" },
 ]
 
-export default function Dashboard({ user }) {
+import type { User } from "@/types"
+
+export default function Dashboard({ user }: { user: User }) {
+  const { logout } = useAuth()
   const [currentTip, setCurrentTip] = useState(0)
   const [activeSection, setActiveSection] = useState("dashboard")
   const [notifications, setNotifications] = useState(3)
@@ -71,8 +75,7 @@ export default function Dashboard({ user }) {
   }, [])
 
   const handleLogout = () => {
-    localStorage.removeItem("swasthwrap_user")
-    window.location.reload()
+    logout()
   }
 
   const renderContent = () => {

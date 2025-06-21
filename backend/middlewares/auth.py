@@ -1,19 +1,20 @@
-from fastapi import HTTPException, status, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import HTTPException, status, Depends # type: ignore
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials # type: ignore
 from typing import Optional
 import logging
 
 from utils.auth import verify_token
 from services.user_service import user_service
+from models.user import User
 
 logger = logging.getLogger(__name__)
 
 security = HTTPBearer()
 
 
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> User:
     """
-    Extract user ID from JWT token
+    Extract user from JWT token
     """
     try:
         token = credentials.credentials
@@ -29,7 +30,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
                 headers={"WWW-Authenticate": "Bearer"},
             )
             
-        return user_id
+        return user
         
     except HTTPException:
         raise
@@ -42,9 +43,9 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         )
 
 
-async def get_optional_user(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)) -> Optional[str]:
+async def get_optional_user(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)) -> Optional[User]:
     """
-    Extract user ID from JWT token (optional)
+    Extract user from JWT token (optional)
     """
     if not credentials:
         return None

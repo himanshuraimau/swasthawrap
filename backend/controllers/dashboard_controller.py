@@ -1,4 +1,4 @@
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status # type: ignore
 from typing import Optional, List
 from services.dashboard_service import DashboardService
 from services.analytics_service import AnalyticsService

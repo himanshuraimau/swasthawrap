@@ -25,24 +25,45 @@ export interface EmergencyContact {
 }
 
 export interface ChatMessage {
-  id: number
+  id: number | string
   type: "user" | "ai"
   content: string
-  timestamp: Date
+  timestamp: Date | string
   language: string
   hasFile?: boolean
+  confidence?: number
+  fileId?: string
 }
 
 export interface ChatSession {
-  id: number
+  id: number | string
   date: string
   title: string
-  summary: string
-  messages: number
+  summary?: string
+  messages?: number
+  messageCount?: number
   language: string
-  tags: string[]
-  bookmark: boolean
-  duration: string
+  tags?: string[]
+  bookmark?: boolean
+  duration?: string
+  createdAt?: string
+  updatedAt?: string
+  isActive?: boolean
+}
+
+export interface ChatFile {
+  name: string
+  size: number
+  type: string
+  data: string // base64 encoded
+}
+
+export interface ChatUploadedFile {
+  fileId: string
+  fileName: string
+  fileSize: number
+  fileType: string
+  fileUrl: string
 }
 
 export interface MedicalDocument {

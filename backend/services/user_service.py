@@ -1,7 +1,7 @@
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
-from motor.motor_asyncio import AsyncIOMotorDatabase
-from bson import ObjectId
+from motor.motor_asyncio import AsyncIOMotorDatabase # type: ignore
+from bson import ObjectId # type: ignore
 import logging
 
 from models.user import (
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class UserService:
     async def _get_collections(self):
         """Get database collections."""
-        db = get_database()
+        db = await get_database()
         return {
             'users': db.users,
             'password_resets': db.password_resets,
@@ -36,37 +36,45 @@ class UserService:
             raise ValueError("User with this email already exists")
 
         # Create user document
-        user = User(
-            name=user_data.name,
-            email=user_data.email,
-            password_hash=get_password_hash(user_data.password),
-            language=user_data.language,
-            interests=user_data.interests
-        )
+        user_dict = {
+            "name": user_data.name,
+            "email": user_data.email,
+            "password_hash": get_password_hash(user_data.password),
+            "language": user_data.language,
+            "interests": user_data.interests,
+            "health_score": 0,
+            "streak": 0,
+            "upcoming_appointments": 0,
+            "medications_due": 0,
+            "email_verified": False,
+            "is_active": True,
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow()
+        }
 
         # Insert user into database
-        result = await users_collection.insert_one(user.dict(by_alias=True))
-        user.id = result.inserted_id
+        result = await users_collection.insert_one(user_dict)
+        user_id = str(result.inserted_id)
 
         # Create access token
         access_token = create_access_token(
-            data={"sub": str(user.id), "email": user.email}
+            data={"sub": user_id, "email": user_data.email}
         )
 
         # Create session
-        await self._create_user_session(str(user.id), access_token, user_sessions_collection)
+        await self._create_user_session(user_id, access_token, user_sessions_collection)
 
         return UserResponseWithToken(
-            id=str(user.id),
-            name=user.name,
-            email=user.email,
-            language=user.language,
-            interests=user.interests,
-            health_score=user.health_score,
-            streak=user.streak,
-            upcoming_appointments=user.upcoming_appointments,
-            medications_due=user.medications_due,
-            avatar=user.avatar,
+            id=user_id,
+            name=user_data.name,
+            email=user_data.email,
+            language=user_data.language,
+            interests=user_data.interests,
+            health_score=0,
+            streak=0,
+            upcoming_appointments=0,
+            medications_due=0,
+            avatar=None,
             token=access_token
         )
 
@@ -80,41 +88,46 @@ class UserService:
         if not user_doc:
             return None
 
-        user = User(**user_doc)
-        if not verify_password(password, user.password_hash):
+        # Convert ObjectId to string for the id field
+        user_doc["_id"] = str(user_doc["_id"])
+        
+        # Validate password
+        if not verify_password(password, user_doc.get("password_hash", "")):
             return None
 
-        if not user.is_active:
+        if not user_doc.get("is_active", True):
             return None
+
+        user_id = user_doc["_id"]
 
         # Create access token
         access_token = create_access_token(
-            data={"sub": str(user.id), "email": user.email}
+            data={"sub": user_id, "email": email}
         )
 
         # Create session
-        await self._create_user_session(str(user.id), access_token, user_sessions_collection)
+        await self._create_user_session(user_id, access_token, user_sessions_collection)
 
         # Update user stats (you can implement this logic later)
-        await self._update_user_stats(str(user.id), users_collection)
+        await self._update_user_stats(user_id, users_collection)
 
         return UserResponseWithToken(
-            id=str(user.id),
-            name=user.name,
-            email=user.email,
-            language=user.language,
-            interests=user.interests,
-            health_score=user.health_score,
-            streak=user.streak,
-            upcoming_appointments=user.upcoming_appointments,
-            medications_due=user.medications_due,
-            avatar=user.avatar,
-            phone=user.phone,
-            date_of_birth=user.date_of_birth.isoformat() if user.date_of_birth else None,
-            gender=user.gender,
-            blood_group=user.blood_group,
-            address=user.address,
-            emergency_contact=user.emergency_contact,
+            id=user_id,
+            name=user_doc.get("name", ""),
+            email=user_doc.get("email", ""),
+            language=user_doc.get("language", "en"),
+            interests=user_doc.get("interests", []),
+            health_score=user_doc.get("health_score", 0),
+            streak=user_doc.get("streak", 0),
+            upcoming_appointments=user_doc.get("upcoming_appointments", 0),
+            medications_due=user_doc.get("medications_due", 0),
+            avatar=user_doc.get("avatar"),
+            phone=user_doc.get("phone"),
+            date_of_birth=user_doc.get("date_of_birth").isoformat() if user_doc.get("date_of_birth") else None,
+            gender=user_doc.get("gender"),
+            blood_group=user_doc.get("blood_group"),
+            address=user_doc.get("address"),
+            emergency_contact=user_doc.get("emergency_contact"),
             token=access_token
         )
 
@@ -126,6 +139,9 @@ class UserService:
             
             user_doc = await users_collection.find_one({"_id": ObjectId(user_id)})
             if user_doc:
+                # Convert ObjectId to string
+                user_doc["_id"] = str(user_doc["_id"])
+                # Create User object with converted data
                 return User(**user_doc)
             return None
         except Exception as e:
@@ -139,7 +155,7 @@ class UserService:
             return None
 
         return UserResponse(
-            id=str(user.id),
+            id=str(user.id) if user.id else user_id,
             name=user.name,
             email=user.email,
             language=user.language,
@@ -221,14 +237,15 @@ class UserService:
         expires_at = datetime.utcnow() + timedelta(hours=1)  # Token expires in 1 hour
 
         # Create password reset document
-        from pydantic import EmailStr
-        reset_doc = PasswordReset(
-            email=EmailStr(email),
-            token=reset_token,
-            expires_at=expires_at
-        )
+        reset_doc = {
+            "email": email,
+            "token": reset_token,
+            "expires_at": expires_at,
+            "used": False,
+            "created_at": datetime.utcnow()
+        }
 
-        await password_resets_collection.insert_one(reset_doc.dict(by_alias=True))
+        await password_resets_collection.insert_one(reset_doc)
         return reset_token
 
     async def reset_password(self, token: str, new_password: str) -> bool:
@@ -287,13 +304,17 @@ class UserService:
     async def _create_user_session(self, user_id: str, session_token: str, user_sessions_collection, device_info: Optional[str] = None) -> bool:
         """Create a new user session."""
         try:
-            session = UserSession(
-                user_id=user_id,
-                session_token=session_token,
-                device_info=device_info,
-                expires_at=datetime.utcnow() + timedelta(minutes=30),  # 30 minutes
-                is_current=True
-            )
+            session_doc = {
+                "user_id": user_id,
+                "session_token": session_token,
+                "device_info": device_info,
+                "ip_address": None,
+                "location": None,
+                "last_active": datetime.utcnow(),
+                "expires_at": datetime.utcnow() + timedelta(minutes=30),  # 30 minutes
+                "is_current": True,
+                "created_at": datetime.utcnow()
+            }
 
             # Mark other sessions as not current
             await user_sessions_collection.update_many(
@@ -302,7 +323,7 @@ class UserService:
             )
 
             # Insert new session
-            await user_sessions_collection.insert_one(session.dict(by_alias=True))
+            await user_sessions_collection.insert_one(session_doc)
             return True
         except Exception as e:
             logger.error(f"Error creating user session: {e}")

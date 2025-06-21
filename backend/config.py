@@ -1,5 +1,5 @@
 import os
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings # type: ignore
 from typing import Optional
 from dotenv import load_dotenv
 
@@ -8,14 +8,7 @@ load_dotenv()
 
 class Settings(BaseSettings):
     # Database
-    mongodb_url: str = os.getenv("MONGODB_URL", "mongodb+srv://enghimanshu:enghimanshu@cluster0.vd8qblh.mongodb.net")
-    database_name: str = os.getenv("DATABASE_NAME", "swasthwrap")
     
-    # OpenAI
-    openai_api_key: str = os.getenv("OPENAI_API_KEY", "open")
-    
-    # Sarvam AI
-    sarvam_api_key: str = os.getenv("SARVAM_API_KEY", "sar")
     
     # JWT
     secret_key: str = os.getenv("SECRET_KEY", "your_secret_key_here")
@@ -26,6 +19,7 @@ class Settings(BaseSettings):
     api_host: str = os.getenv("API_HOST", "0.0.0.0")
     api_port: int = int(os.getenv("API_PORT", "8000"))
     debug: bool = os.getenv("DEBUG", "True").lower() == "true"
+    backend_url: str = os.getenv("BACKEND_URL", "http://localhost:8000")
     
     model_config = {
         "env_file": ".env",

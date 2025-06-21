@@ -1,4 +1,4 @@
-from fastapi import HTTPException, status, Depends, UploadFile, File, Form, Query
+from fastapi import HTTPException, status, Depends, UploadFile, File, Form, Query # type: ignore
 from typing import Optional, List
 from datetime import date
 import logging

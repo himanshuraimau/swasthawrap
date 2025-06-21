@@ -1,5 +1,5 @@
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
-from pymongo.errors import ConnectionFailure
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase # type: ignore
+from pymongo.errors import ConnectionFailure # type: ignore
 import logging
 from typing import Optional
 
@@ -22,7 +22,7 @@ async def connect_to_mongo():
         db.database = db.client[settings.database_name] # type: ignore
         
         # Test the connection
-        if db.client:
+        if db.client is not None:
             await db.client.admin.command('ping')
             logger.info("Connected to MongoDB successfully")
         
@@ -36,12 +36,12 @@ async def connect_to_mongo():
 
 async def close_mongo_connection():
     """Close database connection"""
-    if db.client:
+    if db.client is not None:
         db.client.close()
         logger.info("Disconnected from MongoDB")
 
 
-def get_database() -> AsyncIOMotorDatabase:
+async def get_database() -> AsyncIOMotorDatabase:
     """Get database instance"""
     if db.database is None:
         raise RuntimeError("Database not initialized. Call connect_to_mongo() first.")

@@ -1,13 +1,16 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI # type: ignore
+from fastapi.middleware.cors import CORSMiddleware # type: ignore
+from fastapi.staticfiles import StaticFiles # type: ignore
 from contextlib import asynccontextmanager
 import logging
+import os
 
 from database import connect_to_mongo, close_mongo_connection
 from routes.auth_routes import router as auth_router
 from routes.health_routes import router as health_router
 from routes.dashboard_routes import router as dashboard_router
 from routes.analytics_routes import router as analytics_router
+from routes.chat_routes import router as chat_router
 # from routes.enhanced_chat_routes import router as enhanced_chat_router
 
 # Configure logging
@@ -55,6 +58,13 @@ app.include_router(auth_router)
 app.include_router(health_router)
 app.include_router(dashboard_router, prefix="/api/dashboard", tags=["dashboard"])
 app.include_router(analytics_router, prefix="/api/analytics", tags=["analytics"])
+app.include_router(chat_router, tags=["chat"])
+
+# Mount static files for file uploads
+uploads_dir = "uploads"
+if not os.path.exists(uploads_dir):
+    os.makedirs(uploads_dir, exist_ok=True)
+app.mount("/static", StaticFiles(directory=uploads_dir), name="static")
 
 
 @app.get("/")

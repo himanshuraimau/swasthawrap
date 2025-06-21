@@ -1,4 +1,4 @@
-from fastapi import HTTPException, status, Depends, Request
+from fastapi import HTTPException, status, Depends, Request # type: ignore
 from typing import Optional
 import logging
 

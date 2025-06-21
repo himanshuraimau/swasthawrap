@@ -198,7 +198,7 @@ export default function ChatHistory({ user, onResumeChat }) {
     .sort((a, b) => {
       switch (sortBy) {
         case "date":
-          return new Date(b.date + " " + b.time) - new Date(a.date + " " + a.time)
+          return new Date(b.date + " " + b.time).getTime() - new Date(a.date + " " + a.time).getTime()
         case "title":
           return a.title.localeCompare(b.title)
         case "duration":

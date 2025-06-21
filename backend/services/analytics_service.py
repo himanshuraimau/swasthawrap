@@ -1,6 +1,6 @@
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
-from bson import ObjectId
+from bson import ObjectId # type: ignore
 import logging
 from collections import defaultdict
 
@@ -18,7 +18,7 @@ class AnalyticsService:
     
     async def _get_collections(self):
         """Get database collections."""
-        db = get_database()
+        db = await get_database()
         return {
             'users': db.users,
             'health_metrics': db.health_metrics,
