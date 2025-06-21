@@ -1,7 +1,19 @@
 [project]
 name = "backend"
 version = "0.1.0"
-description = "Add your description here"
+description = "SwasthWrap Backend API with FastAPI"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "bson>=0.5.10",
+    "fastapi>=0.115.13",
+    "httpx>=0.28.1",
+    "python-jose[cryptography]>=3.3.0",
+    "motor>=3.7.1",
+    "openai>=1.90.0",
+    "pydantic>=2.11.7",
+    "pydantic-settings>=2.0.0",
+    "pymango>=0.1.1",
+    "python-dotenv>=1.1.0",
+    "uvicorn[standard]>=0.34.3",
+]
