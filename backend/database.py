@@ -19,7 +19,7 @@ async def connect_to_mongo():
     try:
         from config import settings
         db.client = AsyncIOMotorClient(settings.mongodb_url)
-        db.database = db.client[settings.database_name]
+        db.database = db.client[settings.database_name] # type: ignore
         
         # Test the connection
         if db.client:

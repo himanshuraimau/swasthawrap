@@ -1,0 +1,1043 @@
+Speech to Text
+Speech To Text
+POST
+https://api.sarvam.ai/speech-to-text
+POST
+/speech-to-text
+
+Python
+
+import requests
+url = "https://api.sarvam.ai/speech-to-text"
+files = { "file": "open('foo', 'rb')" }
+payload = {
+    "model": ,
+    "language_code": 
+}
+headers = {"api-subscription-key": "<api-subscription-key>"}
+response = requests.post(url, data=payload, files=files, headers=headers)
+print(response.json())
+Try it
+200
+speechToTextTranscribeExample
+
+{
+  "transcript": "नमस्ते, आप कैसे हैं?",
+  "request_id": "foo",
+  "timestamps": {
+    "words": [
+      "foo"
+    ],
+    "start_time_seconds": [
+      42
+    ],
+    "end_time_seconds": [
+      42
+    ]
+  },
+  "diarized_transcript": {
+    "entries": [
+      {
+        "transcript": "foo",
+        "start_time_seconds": 42,
+        "end_time_seconds": 42,
+        "speaker_id": "foo"
+      }
+    ]
+  },
+  "language_code": "foo"
+}
+Real-Time Speech to Text API
+This API transcribes speech to text in multiple Indian languages and English. Supports real-time transcription for interactive applications.
+
+Available Options:
+Real-Time API (Current Endpoint): For quick responses under 30 seconds with immediate results
+Batch API: For longer audio files, requires following a notebook script - View Notebook
+Supports diarization (speaker identification)
+Note:
+Pricing differs for Real-Time and Batch APIs
+Diarization is only available in Batch API with separate pricing
+Please refer to dashboard.sarvam.ai for detailed pricing information
+Headers
+api-subscription-key
+string
+Required
+Request
+This endpoint expects a multipart form containing a file.
+file
+file
+Required
+The audio file to transcribe. Supported formats are WAV (.wav) and MP3 (.mp3). The API works best with audio files sampled at 16kHz. If the audio contains multiple channels, they will be merged into a single channel.
+
+model
+enum
+Optional
+Specifies the model to use for speech-to-text conversion. Note:- Default model is saarika:v2.5
+
+Allowed values:
+saarika:v2
+saarika:v2.5
+language_code
+enum
+Optional
+Specifies the language of the input audio. For the saarika:v2.5 model, it is optional. unknown: Use this when the language is not known; the API will detect it automatically.
+
+
+Show 12 enum values
+Response
+Successful Response
+transcript
+string
+The transcribed text from the provided audio file.
+request_id
+string or null
+timestamps
+object or null
+Contains timestamps for the transcribed text. This field is included only if with_timestamps is set to true
+
+
+Show 3 properties
+diarized_transcript
+object or null
+Diarized transcript of the provided speech
+
+Show 1 properties
+language_code
+string or null
+This will return the BCP-47 code of language spoken in the input. If multiple languages are detected, this will return language code of most predominant spoken language. If no language is detected, this will be null
+
+Errors
+
+400
+Bad Request Error
+
+403
+Forbidden Error
+
+422
+Unprocessable Entity Error
+
+429
+Too Many Requests Error
+
+500
+Internal Server Error
+
+503
+Service Unavailable Error
+Was this page helpful?
+Yes
+No
+
+
+Speech to Text
+Speech To Text Translate
+POST
+https://api.sarvam.ai/speech-to-text-translate
+POST
+/speech-to-text-translate
+
+Python
+
+import requests
+url = "https://api.sarvam.ai/speech-to-text-translate"
+files = { "file": "open('foo', 'rb')" }
+payload = {
+    "prompt": ,
+    "model": 
+}
+headers = {"api-subscription-key": "<api-subscription-key>"}
+response = requests.post(url, data=payload, files=files, headers=headers)
+print(response.json())
+Try it
+200
+speechToTextTranslateExample
+
+{
+  "transcript": "foo",
+  "request_id": "foo",
+  "language_code": "hi-IN",
+  "diarized_transcript": {
+    "entries": [
+      {
+        "transcript": "foo",
+        "start_time_seconds": 42,
+        "end_time_seconds": 42,
+        "speaker_id": "foo"
+      }
+    ]
+  }
+}
+Real-Time Speech to Text Translation API
+This API automatically detects the input language, transcribes the speech, and translates the text to English.
+
+Available Options:
+Real-Time API (Current Endpoint): For quick responses under 30 seconds with immediate results
+Batch API: For longer audio files, requires following a notebook script - View Notebook
+Supports diarization (speaker identification)
+Note:
+Pricing differs for Real-Time and Batch APIs
+Diarization is only available in Batch API with separate pricing
+Please refer to dashboard.sarvam.ai for detailed pricing information
+Headers
+api-subscription-key
+string
+Required
+Request
+This endpoint expects a multipart form containing a file.
+file
+file
+Required
+The audio file to transcribe. Supported formats are wave (.wav) and MPEG-3 (.mp3). Works best at 16kHz. Multiple channels will be merged.
+
+prompt
+string
+Optional
+Conversation context can be passed as a prompt to boost model accuracy. However, the current system is at an experimentation stage and doesn’t match the prompt performance of large language models.
+
+model
+enum
+Optional
+Model to be used for converting speech to text in target language
+Allowed values:
+saaras:v2
+saaras:v2.5
+Response
+Successful Response
+transcript
+string
+Transcript of the provided speech
+request_id
+string or null
+language_code
+enum or null
+This will return the BCP-47 code of language spoken in the input. If multiple languages are detected, this will return language code of most predominant spoken language. If no language is detected, this will be null
+
+
+Show 11 enum values
+diarized_transcript
+object or null
+Diarized transcript of the provided speech
+
+Show 1 properties
+Errors
+
+400
+Bad Request Error
+
+403
+Forbidden Error
+
+422
+Unprocessable Entity Error
+
+429
+Too Many Requests Error
+
+500
+Internal Server Error
+
+503
+Service Unavailable Error
+Was this page helpful?
+Yes
+No
+Previous
+
+
+Text to Speech
+Text to Speech
+POST
+https://api.sarvam.ai/text-to-speech
+POST
+/text-to-speech
+
+Python
+
+import requests
+url = "https://api.sarvam.ai/text-to-speech"
+payload = {
+    "text": "foo",
+    "target_language_code": "bn-IN"
+}
+headers = {
+    "api-subscription-key": "<api-subscription-key>",
+    "Content-Type": "application/json"
+}
+response = requests.post(url, json=payload, headers=headers)
+print(response.json())
+Try it
+200
+textToSpeechConvertExample
+
+{
+  "audios": [
+    "foo"
+  ],
+  "request_id": "foo"
+}
+This is the model to convert text into spoken audio. The output is a wave file encoded as a base64 string.
+Headers
+api-subscription-key
+string
+Required
+Request
+This endpoint expects an object.
+text
+string
+Required
+The text(s) to be converted into speech.
+
+Features:
+
+Each text should be no longer than 1500 characters
+Supports code-mixed text (English and Indic languages)
+Important Note:
+
+For numbers larger than 4 digits, use commas (e.g., ‘10,000’ instead of ‘10000’)
+This ensures proper pronunciation as a whole number
+
+Show 1 variants
+target_language_code
+enum
+Required
+The language of the text is BCP-47 format
+
+
+Show 11 enum values
+speaker
+enum
+Optional
+The speaker voice to be used for the output audio.
+
+Default: Anushka
+
+Model Compatibility (Speakers compatible with respective model):
+
+bulbul:v2:
+Female: Anushka, Manisha, Vidya, Arya
+Male: Abhilash, Karun, Hitesh
+Note: Speaker selection must match the chosen model version.
+
+
+Show 7 enum values
+pitch
+double
+Optional
+Defaults to 0
+Controls the pitch of the audio. Lower values result in a deeper voice, while higher values make it sharper. The suitable range is between -0.75 and 0.75. Default is 0.0.
+
+pace
+double
+Optional
+>=0.3
+<=3
+Defaults to 1
+Controls the speed of the audio. Lower values result in slower speech, while higher values make it faster. The suitable range is between 0.5 and 2.0. Default is 1.0.
+loudness
+double
+Optional
+>=0.1
+<=3
+Defaults to 1
+Controls the loudness of the audio. Lower values result in quieter audio, while higher values make it louder. The suitable range is between 0.3 and 3.0. Default is 1.0.
+speech_sample_rate
+enum
+Optional
+Specifies the sample rate of the output audio. Supported values are 8000, 16000, 22050, 24000 Hz. If not provided, the default is 22050 Hz.
+Allowed values:
+8000
+16000
+22050
+24000
+enable_preprocessing
+boolean
+Optional
+Defaults to false
+Controls whether normalization of English words and numeric entities (e.g., numbers, dates) is performed. Set to true for better handling of mixed-language text. Default is false.
+
+model
+enum
+Optional
+Specifies the model to use for text-to-speech conversion. Default is bulbul:v2.
+
+Allowed values:
+bulbul:v2
+Response
+Successful Response
+audios
+list of strings
+The output audio files in WAV format, encoded as base64 strings. Each string corresponds to one of the input texts.
+request_id
+string or null
+Errors
+
+400
+Bad Request Error
+
+403
+Forbidden Error
+
+422
+Unprocessable Entity Error
+
+429
+Too Many Requests Error
+
+500
+Internal Server Error
+Was this page helpful?
+Yes
+
+
+
+Text
+Translate Text
+POST
+https://api.sarvam.ai/translate
+POST
+/translate
+
+Python
+
+import requests
+url = "https://api.sarvam.ai/translate"
+payload = {
+    "input": "foo",
+    "source_language_code": "auto",
+    "target_language_code": "bn-IN"
+}
+headers = {
+    "api-subscription-key": "<api-subscription-key>",
+    "Content-Type": "application/json"
+}
+response = requests.post(url, json=payload, headers=headers)
+print(response.json())
+Try it
+200
+textTranslateExample
+
+{
+  "translated_text": "foo",
+  "source_language_code": "foo",
+  "request_id": "foo"
+}
+Translation converts text from one language to another while preserving its meaning. For Example: ‘मैं ऑफिस जा रहा हूँ’ translates to ‘I am going to the office’ in English, where the script and language change, but the original meaning remains the same.
+
+Available languages:
+
+bn-IN: Bengali
+en-IN: English
+gu-IN: Gujarati
+hi-IN: Hindi
+kn-IN: Kannada
+ml-IN: Malayalam
+mr-IN: Marathi
+od-IN: Odia
+pa-IN: Punjabi
+ta-IN: Tamil
+te-IN: Telugu
+Newly added languages:
+as-IN: Assamese
+brx-IN: Bodo
+doi-IN: Dogri
+kok-IN: Konkani
+ks-IN: Kashmiri
+mai-IN: Maithili
+mni-IN: Manipuri (Meiteilon)
+ne-IN: Nepali
+sa-IN: Sanskrit
+sat-IN: Santali
+sd-IN: Sindhi
+ur-IN: Urdu
+For hands-on practice, you can explore the notebook tutorial on Translate API Tutorial.
+
+Headers
+api-subscription-key
+string
+Required
+Request
+This endpoint expects an object.
+input
+string
+Required
+<=2000 characters
+The text you want to translate is the input text that will be processed by the translation model. The maximum is 1000 characters for Mayura:v1 and 2000 characters for Sarvam-Translate:v1.
+
+source_language_code
+enum
+Required
+Source language code for translation input.
+
+mayura:v1 Languages: Bengali, English, Gujarati, Hindi, Kannada, Malayalam, Marathi, Odia, Punjabi, Tamil, Telugu
+
+sarvam-translate:v1 Languages: All mayura:v1 languages and Assamese, Bodo, Dogri, Konkani, Kashmiri, Maithili, Manipuri, Nepali, Sanskrit, Santali, Sindhi, Urdu
+
+Note: mayura:v1 supports automatic language detection using ‘auto’ as the source language code.
+
+
+Show 24 enum values
+target_language_code
+enum
+Required
+The language code of the translated text. This specifies the target language for translation.
+
+mayura:v1 Languages: Bengali, English, Gujarati, Hindi, Kannada, Malayalam, Marathi, Odia, Punjabi, Tamil, Telugu
+
+sarvam-translate:v1 Languages: All mayura:v1 and Assamese, Bodo, Dogri, Konkani, Kashmiri, Maithili, Manipuri, Nepali, Sanskrit, Santali, Sindhi, Urdu
+
+
+Show 23 enum values
+speaker_gender
+enum
+Optional
+Please specify the gender of the speaker for better translations.
+Allowed values:
+Male
+Female
+mode
+enum
+Optional
+Specifies the tone or style of the translation.
+
+Model Support:
+
+mayura:v1: Supports formal, classic-colloquial, and modern-colloquial modes
+sarvam-translate:v1: Only formal mode is supported
+Default: formal
+
+Allowed values:
+formal
+modern-colloquial
+classic-colloquial
+code-mixed
+model
+enum
+Optional
+Specifies the translation model to use.
+
+mayura:v1: Supports 12 languages with all modes, output scripts, and automatic language detection.
+sarvam-translate:v1: Supports all 22 scheduled languages of India, formal mode only.
+Allowed values:
+mayura:v1
+sarvam-translate:v1
+enable_preprocessing
+boolean
+Optional
+Defaults to false
+This will enable custom preprocessing of the input text which can result in better translations. Recommendation- You can switch on whenever there is some complex text with difficult vocabulary and sentences, for which you want simple translations that people can understand.
+
+output_script
+enum
+Optional
+output_script: This is an optional parameter which controls the transliteration style applied to the output text.
+
+Transliteration: Converting text from one script to another while preserving pronunciation.
+
+For mayura:v1 - We support transliteration with four options:
+
+null(default): No transliteration applied.
+roman: Transliteration in Romanized script.
+fully-native: Transliteration in the native script with formal style.
+spoken-form-in-native: Transliteration in the native script with spoken style.
+For sarvam-translate:v1 - Transliteration is not supported.
+
+Example:
+English: Your EMI of Rs. 3000 is pending. Default modern translation: आपका Rs. 3000 का EMI pending है (when null is passed).
+
+With postprocessing enabled:
+
+roman output: aapka Rs. 3000 ka EMI pending hai.
+Allowed values:
+roman
+fully-native
+spoken-form-in-native
+numerals_format
+enum
+Optional
+numerals_format is an optional parameter with two options (supported for both mayura:v1 and sarvam-translate:v1):
+
+international (default): Uses regular numerals (0-9).
+native: Uses language-specific native numerals.
+Example:
+If international format is selected, we use regular numerals (0-9). For example: मेरा phone number है: 9840950950.
+If native format is selected, we use language-specific native numerals, like: मेरा phone number है: ९८४०९५०९५०.
+Allowed values:
+international
+native
+Response
+Successful Response
+translated_text
+string
+Translated text result in the requested target language.
+source_language_code
+string
+Detected or provided source language of the input text.
+request_id
+string or null
+Errors
+
+400
+Bad Request Error
+
+403
+Forbidden Error
+
+422
+Unprocessable Entity Error
+
+429
+Too Many Requests Error
+
+500
+Internal Server Error
+Was this page helpful?
+Yes
+No
+Previous
+
+
+
+Text
+Language Identification
+POST
+https://api.sarvam.ai/text-lid
+POST
+/text-lid
+
+Python
+
+import requests
+url = "https://api.sarvam.ai/text-lid"
+payload = { "input": "foo" }
+headers = {
+    "api-subscription-key": "<api-subscription-key>",
+    "Content-Type": "application/json"
+}
+response = requests.post(url, json=payload, headers=headers)
+print(response.json())
+Try it
+200
+textIdentifyLanguageExample
+
+{
+  "request_id": "foo",
+  "language_code": "foo",
+  "script_code": "foo"
+}
+Identifies the language (e.g., en-IN, hi-IN) and script (e.g., Latin, Devanagari) of the input text, supporting multiple languages.
+
+Headers
+api-subscription-key
+string
+Required
+Request
+This endpoint expects an object.
+input
+string
+Required
+The text input for language and script identification. Max Input Limit is 1000 characters
+Response
+Successful Response
+request_id
+string or null
+language_code
+string or null
+The detected language code of the input text.
+
+Available languages:
+
+en-IN: English
+hi-IN: Hindi
+bn-IN: Bengali
+gu-IN: Gujarati
+kn-IN: Kannada
+ml-IN: Malayalam
+mr-IN: Marathi
+od-IN: Odia
+pa-IN: Punjabi
+ta-IN: Tamil
+te-IN: Telugu
+script_code
+string or null
+The detected script code of the input text.
+
+Available scripts:
+
+Latn: Latin (Romanized script)
+Deva: Devanagari (Hindi, Marathi)
+Beng: Bengali
+Gujr: Gujarati
+Knda: Kannada
+Mlym: Malayalam
+Orya: Odia
+Guru: Gurmukhi
+Taml: Tamil
+Telu: Telugu
+Errors
+
+400
+Bad Request Error
+
+403
+Forbidden Error
+
+422
+Unprocessable Entity Error
+
+429
+Too Many Requests Error
+
+500
+Internal Server Error
+Was this page helpful?
+Yes
+
+
+Transliterate Text
+POST
+https://api.sarvam.ai/transliterate
+POST
+/transliterate
+
+Python
+
+import requests
+url = "https://api.sarvam.ai/transliterate"
+payload = {
+    "input": "foo",
+    "source_language_code": "auto",
+    "target_language_code": "bn-IN"
+}
+headers = {
+    "api-subscription-key": "<api-subscription-key>",
+    "Content-Type": "application/json"
+}
+response = requests.post(url, json=payload, headers=headers)
+print(response.json())
+Try it
+200
+textTransliterateExample
+
+{
+  "transliterated_text": "foo",
+  "source_language_code": "foo",
+  "request_id": "foo"
+}
+Transliteration converts text from one script to another while preserving the original pronunciation. For example, ‘नमस्ते’ becomes ‘namaste’ in English, and ‘how are you’ can be written as ‘हाउ आर यू’ in Devanagari. This process ensures that the sound of the original text remains intact, even when written in a different script.
+
+Transliteration is useful when you want to represent words phonetically across different writing systems, such as converting ‘मैं ऑफिस जा रहा हूँ’ to ‘main office ja raha hun’ in English letters.
+
+Translation, on the other hand, converts text from one language to another while preserving the meaning rather than pronunciation. For example, ‘मैं ऑफिस जा रहा हूँ’ translates to ‘I am going to the office’ in English, changing both the script and the language while conveying the intended message.
+
+Examples of Transliteration:
+‘Good morning’ becomes ‘गुड मॉर्निंग’ in Hindi, where the pronunciation is preserved but the meaning is not translated.
+‘सुप्रभात’ becomes ‘suprabhat’ in English.
+Available languages:
+
+en-IN: English
+hi-IN: Hindi
+bn-IN: Bengali
+gu-IN: Gujarati
+kn-IN: Kannada
+ml-IN: Malayalam
+mr-IN: Marathi
+od-IN: Odia
+pa-IN: Punjabi
+ta-IN: Tamil
+te-IN: Telugu
+For hands-on practice, you can explore the notebook tutorial on Transliterate API Tutorial.
+
+Headers
+api-subscription-key
+string
+Required
+Request
+This endpoint expects an object.
+input
+string
+Required
+<=1000 characters
+The text you want to transliterate.
+source_language_code
+enum
+Required
+The language code of the input text. This specifies the source language for transliteration.
+
+Note: The source language should either be an Indic language or English. As we supports both Indic-to-English and English-to-Indic transliteration.
+
+
+Show 12 enum values
+target_language_code
+enum
+Required
+The language code of the transliteration text. This specifies the target language for transliteration.
+
+Note:The target language should either be an Indic language or English. As we supports both Indic-to-English and English-to-Indic transliteration.
+
+
+Show 11 enum values
+numerals_format
+enum
+Optional
+numerals_format is an optional parameter with two options:
+
+international (default): Uses regular numerals (0-9).
+native: Uses language-specific native numerals.
+Example:
+If international format is selected, we use regular numerals (0-9). For example: मेरा phone number है: 9840950950.
+If native format is selected, we use language-specific native numerals, like: मेरा phone number है: ९८४०९५०९५०.
+Allowed values:
+international
+native
+spoken_form_numerals_language
+enum
+Optional
+spoken_form_numerals_language is an optional parameter with two options and only works when spoken_form is true:
+
+english : Numbers in the text will be spoken in English.
+native(default): Numbers in the text will be spoken in the native language.
+Examples:
+Input: “मेरे पास ₹200 है”
+If english format is selected: “मेरे पास टू हन्डर्ड रूपीस है”
+If native format is selected: “मेरे पास दो सौ रुपये है”
+Allowed values:
+english
+native
+spoken_form
+boolean
+Optional
+Defaults to false
+Default: False
+Converts text into a natural spoken form when True.
+Note: No effect if output language is en-IN.
+Example:
+Input: मुझे कल 9:30am को appointment है
+Output: मुझे कल सुबह साढ़े नौ बजे को अपॉइंटमेंट है
+Response
+Successful Response
+transliterated_text
+string
+Transliterated text result in the requested target language.
+source_language_code
+string
+Detected or provided source language of the input text.
+request_id
+string or null
+Errors
+
+400
+Bad Request Error
+
+403
+Forbidden Error
+
+422
+Unprocessable Entity Error
+
+429
+Too Many Requests Error
+
+500
+Internal Server Error
+Was this page helpful?
+Yes
+No
+Previous
+
+
+
+Chat
+Chat Completions
+POST
+https://api.sarvam.ai/v1/chat/completions
+POST
+/v1/chat/completions
+
+Python
+
+import requests
+url = "https://api.sarvam.ai/v1/chat/completions"
+payload = {
+    "messages": [
+        {
+            "content": "foo",
+            "role": "foo"
+        }
+    ],
+    "model": "sarvam-m"
+}
+headers = {
+    "api-subscription-key": "<api-subscription-key>",
+    "Content-Type": "application/json"
+}
+response = requests.post(url, json=payload, headers=headers)
+print(response.json())
+Try it
+200
+chatCompletionsExample
+
+{
+  "id": "foo",
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 42,
+      "message": {
+        "content": "foo",
+        "role": "assistant"
+      }
+    }
+  ],
+  "created": 42,
+  "model": "foo",
+  "object": "foo",
+  "usage": {
+    "completion_tokens": 42,
+    "prompt_tokens": 42,
+    "total_tokens": 42
+  }
+}
+Calls Sarvam LLM API to get the chat completion. Supported model(s): sarvam-m.
+
+Headers
+api-subscription-key
+string
+Required
+Request
+This endpoint expects an object.
+messages
+list of objects
+Required
+A list of messages comprising the conversation so far.
+
+Show 3 variants
+model
+enum
+Required
+Model ID used to generate the response, like sarvam-m.
+
+Allowed values:
+sarvam-m
+temperature
+double
+Optional
+>=0
+<=2
+Defaults to 0.2
+What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic. We generally recommend altering this or top_p but not both.
+
+top_p
+double
+Optional
+>=0
+<=1
+Defaults to 1
+An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.
+
+We generally recommend altering this or temperature but not both.
+
+reasoning_effort
+enum
+Optional
+Allowed values:
+low
+medium
+high
+max_tokens
+integer
+Optional
+The maximum number of tokens that can be generated in the chat completion.
+stream
+boolean
+Optional
+Defaults to false
+If set to true, the model response data will be streamed to the client as it is generated using server-sent events.
+
+stop
+string or list of strings
+Optional
+Up to 4 sequences where the API will stop generating further tokens. The returned text will not contain the stop sequence.
+
+Show 2 variants
+n
+integer
+Optional
+>=1
+<=128
+Defaults to 1
+How many chat completion choices to generate for each input message. Note that you will be charged based on the number of generated tokens across all of the choices. Keep n as 1 to minimize costs.
+
+seed
+integer
+Optional
+>=-9223372036854776000
+<=9223372036854776000
+This feature is in Beta. If specified, our system will make a best effort to sample deterministically, such that repeated requests with the same seed and parameters should return the same result.
+
+frequency_penalty
+double
+Optional
+>=-2
+<=2
+Defaults to 0
+Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model’s likelihood to repeat the same line verbatim.
+
+presence_penalty
+double
+Optional
+>=-2
+<=2
+Defaults to 0
+Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model’s likelihood to talk about new topics.
+
+wiki_grounding
+boolean
+Optional
+Defaults to false
+If this parameter is enabled, then the model uses a RAG based approach to retrieve relevant chunks from Wikipedia and uses them to answer the question. This is particularly useful for queries seeking factual information.
+Response
+Successful Response
+id
+string
+A unique identifier for the chat completion.
+choices
+list of objects
+A list of chat completion choices. Can be more than one if n is greater than 1.
+
+
+Show 3 properties
+created
+integer
+The Unix timestamp (in seconds) of when the chat completion was created.
+
+model
+string
+The model used for the chat completion.
+object
+"chat.completion"
+The object type, which is always chat.completion.
+
+usage
+object or null
+
+Show 3 properties
+Errors
+
+400
+Bad Request Error
+
+403
+Forbidden Error
+
+422
+Unprocessable Entity Error
+
+429
+Too Many Requests Error
+
+500
+Internal Server Error
+Was this page helpful?
+Yes
+No

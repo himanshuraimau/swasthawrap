@@ -1,8 +1,10 @@
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import JWTError, jwt
 from typing import Optional
 import logging
+
+from utils.auth import verify_token
+from services.user_service import user_service
 
 logger = logging.getLogger(__name__)
 
@@ -12,29 +14,32 @@ security = HTTPBearer()
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
     """
     Extract user ID from JWT token
-    For now, we'll implement a simple mock authentication
     """
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    
     try:
-        # For development, we'll accept any token and extract user_id
-        # In production, implement proper JWT validation
         token = credentials.credentials
+        token_data = verify_token(token)
+        user_id = token_data["user_id"]
         
-        # Mock implementation - in production, validate JWT properly
-        if not token:
-            raise credentials_exception
+        # Verify user exists and is active
+        user = await user_service.get_user_by_id(user_id)
+        if not user or not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found or inactive",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
             
-        # For now, return a mock user ID
-        # You should implement proper JWT decoding here
-        return "user123"  # Mock user ID
+        return user_id
         
-    except JWTError:
-        raise credentials_exception
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error validating token: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 
 async def get_optional_user(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)) -> Optional[str]:

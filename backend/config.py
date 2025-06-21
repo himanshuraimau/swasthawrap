@@ -8,11 +8,14 @@ load_dotenv()
 
 class Settings(BaseSettings):
     # Database
-    mongodb_url: str = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+    mongodb_url: str = os.getenv("MONGODB_URL", "local")
     database_name: str = os.getenv("DATABASE_NAME", "swasthwrap")
     
     # OpenAI
-    openai_api_key: str = os.getenv("OPENAI_API_KEY", "your_openai_api_key_here")
+    openai_api_key: str = os.getenv("OPENAI_API_KEY", "open")
+    
+    # Sarvam AI
+    sarvam_api_key: str = os.getenv("SARVAM_API_KEY", "sar")
     
     # JWT
     secret_key: str = os.getenv("SECRET_KEY", "your_secret_key_here")
