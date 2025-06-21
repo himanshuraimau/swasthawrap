@@ -8,7 +8,7 @@ load_dotenv()
 
 class Settings(BaseSettings):
     # Database
-    mongodb_url: str = os.getenv("MONGODB_URL", "local")
+    mongodb_url: str = os.getenv("MONGODB_URL", "mongodb+srv://enghimanshu:enghimanshu@cluster0.vd8qblh.mongodb.net")
     database_name: str = os.getenv("DATABASE_NAME", "swasthwrap")
     
     # OpenAI
