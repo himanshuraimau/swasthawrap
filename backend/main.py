@@ -4,13 +4,10 @@ from contextlib import asynccontextmanager
 import logging
 
 from database import connect_to_mongo, close_mongo_connection
-from routes.chat_routes import router as chat_router
 from routes.auth_routes import router as auth_router
 from routes.health_routes import router as health_router
 from routes.dashboard_routes import router as dashboard_router
 from routes.analytics_routes import router as analytics_router
-from routes.sarvam_routes import router as sarvam_router
-from routes.simple_sarvam_routes import router as simple_sarvam_router
 # from routes.enhanced_chat_routes import router as enhanced_chat_router
 
 # Configure logging
@@ -58,10 +55,6 @@ app.include_router(auth_router)
 app.include_router(health_router)
 app.include_router(dashboard_router, prefix="/api/dashboard", tags=["dashboard"])
 app.include_router(analytics_router, prefix="/api/analytics", tags=["analytics"])
-app.include_router(sarvam_router)  # Full Sarvam AI endpoints
-app.include_router(simple_sarvam_router)  # Simplified Sarvam AI endpoints
-# app.include_router(enhanced_chat_router, prefix="/api/chat", tags=["chat"])
-app.include_router(chat_router)  # Keep for backward compatibility
 
 
 @app.get("/")
