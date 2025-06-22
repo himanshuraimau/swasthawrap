@@ -6,7 +6,7 @@ import {
   Home,
   MessageCircle,
   FileText,
-  User,
+  User as UserIcon,
   SettingsIcon,
   Bell,
   Upload,
@@ -17,12 +17,20 @@ import {
   Clock,
   Target,
   LogOut,
+  Shield,
+  Database,
+  CheckCircle,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import AIChatbot from "./modern-ai-chatbot"
 import MedicalHistory from "./medical-history"
 import HealthProfile from "./health-profile"
 import Settings from "./settings"
+import UploadRecords from "./upload-records"
+import Web3Records from "./web3-records"
+import ConsentManagement from "./consent-management"
+import VerifyDocuments from "./verify-documents"
+import { WalletStatusCompact } from "./wallet-connection"
 import { useAuth } from "@/lib/react-query/hooks/useAuth"
 
 const mockDashboardData = {
@@ -51,11 +59,15 @@ const mockDashboardData = {
 }
 
 const navigationItems = [
-  { icon: Home, label: "Dashboard", id: "dashboard", active: true },
-  { icon: MessageCircle, label: "AI Health Chat", id: "chat" },
-  { icon: FileText, label: "Medical History", id: "history" },
-  { icon: User, label: "Health Profile", id: "profile" },
-  { icon: SettingsIcon, label: "Settings", id: "settings" },
+  { icon: Home, label: "Dashboard", id: "dashboard", active: true, web3: false },
+  { icon: MessageCircle, label: "AI Health Chat", id: "chat", web3: false },
+  { icon: Upload, label: "Upload Records", id: "upload", web3: true },
+  { icon: FileText, label: "Medical History", id: "history", web3: false },
+  { icon: Database, label: "Web3 Records", id: "web3-records", web3: true },
+  { icon: Shield, label: "Consent Management", id: "consent", web3: true },
+  { icon: CheckCircle, label: "Verify Documents", id: "verify", web3: true },
+  { icon: UserIcon, label: "Health Profile", id: "profile", web3: false },
+  { icon: SettingsIcon, label: "Settings", id: "settings", web3: false },
 ]
 
 import type { User } from "@/types"
@@ -82,8 +94,16 @@ export default function Dashboard({ user }: { user: User }) {
     switch (activeSection) {
       case "chat":
         return <AIChatbot user={user} />
+      case "upload":
+        return <UploadRecords user={user} />
       case "history":
         return <MedicalHistory user={user} />
+      case "web3-records":
+        return <Web3Records user={user} />
+      case "consent":
+        return <ConsentManagement user={user} />
+      case "verify":
+        return <VerifyDocuments user={user} />
       case "profile":
         return <HealthProfile user={user} />
       case "settings":
@@ -394,6 +414,11 @@ export default function Dashboard({ user }: { user: User }) {
                     className={`transition-transform duration-300 ${activeSection === item.id ? "scale-110" : "group-hover:scale-110"}`}
                   />
                   <span className="font-medium text-base">{item.label}</span>
+                  {item.web3 && (
+                    <div className="ml-auto">
+                      <div className="w-2 h-2 rounded-full bg-gradient-to-r from-[#3ECF8E] to-[#2DD4BF] opacity-70" />
+                    </div>
+                  )}
                   {activeSection === item.id && <div className="ml-auto w-2 h-2 rounded-full bg-black" />}
                 </button>
               </li>
@@ -416,7 +441,14 @@ export default function Dashboard({ user }: { user: User }) {
      
 
         {/* Dashboard Content */}
-        <main className="flex-1 p-6 overflow-auto">{renderContent()}</main>
+        <main className="flex-1 p-6 overflow-auto">
+          {/* Header with Wallet Status */}
+          <div className="flex justify-end mb-6">
+            <WalletStatusCompact />
+          </div>
+          
+          {renderContent()}
+        </main>
       </div>
   )
 }
