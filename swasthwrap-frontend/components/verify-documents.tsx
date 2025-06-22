@@ -1,8 +1,26 @@
 "use client"
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { CheckCircle, AlertTriangle, Search, Upload, FileText, Shield, ExternalLink, Copy } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { 
+  CheckCircle, 
+  AlertTriangle, 
+  Search, 
+  Upload, 
+  FileText, 
+  Shield, 
+  ExternalLink, 
+  Copy, 
+  Clock,
+  X,
+  Hash,
+  UserIcon,
+  Building,
+  Calendar,
+  AlertCircle,
+  RefreshCw,
+  Download
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -10,25 +28,83 @@ import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { WalletConnection, WalletStatus } from '@/components/wallet-connection'
+import { Progress } from '@/components/ui/progress'
+import { WalletConnection } from '@/components/wallet-connection'
 import { useAccount } from 'wagmi'
 import type { User } from '@/types'
 
 interface VerificationResult {
-  isValid: boolean
-  documentHash: string
-  onChainHash: string
-  timestampOnChain: string
-  issuer: string
-  recordType: string
-  verificationLevel: 'high' | 'medium' | 'low'
-  blockNumber: number
-  transactionHash: string
-  metadata: {
-    fileName: string
-    fileSize: string
-    mimeType: string
-    ipfsHash: string
+  success: boolean
+  verification: {
+    status: 'verified' | 'pending' | 'flagged' | 'error'
+    score: number
+    timestamp: string
+    verificationId: string
+    checks: {
+      recordExists: boolean
+      ipfsIntegrity: boolean
+      blockchainRecord: boolean
+      hashMatch: boolean
+      timestampValid: boolean
+      signatureValid: boolean
+      providerValid: boolean
+      formatValid: boolean
+      consensusCheck: boolean
+      cryptoProof: boolean
+    }
+    recommendations: string[]
+    warnings: string[]
+    document?: {
+      recordId: number
+      documentCID: string
+      recordType: string
+      patientName: string
+      issueDate: string
+      provider: {
+        id: string
+        name: string
+        verified: boolean
+        trustScore: number
+        license: string
+      }
+      userDID: string
+    }
+    blockchain: {
+      network: string
+      contractAddress: string
+      verificationTxHash: string
+      blockNumber: number
+      gasUsed: number
+      confirmations: number
+    }
+    technical: {
+      hashMatched: boolean
+      calculatedHash?: string
+      expectedHash?: string
+      ipfsAccessible: boolean
+      consensusReached: boolean
+      signatureVerified: boolean
+    }
+    provider?: {
+      name: string
+      verified: boolean
+      trustScore: number
+      license: string
+      id: string
+    }
+    metadata: {
+      verificationMethod: string
+      confidenceLevel: 'high' | 'medium' | 'low'
+      riskLevel: 'low' | 'medium' | 'high'
+      nextVerificationDue: string
+      verificationCost: string
+    }
+  }
+  urls: {
+    baseScanTx: string
+    baseScanContract: string
+    ipfsGateway?: string
+    verificationReport: string
   }
 }
 
@@ -42,8 +118,10 @@ export default function VerifyDocuments({ user }: VerifyDocumentsProps) {
   const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null)
   const [isVerifying, setIsVerifying] = useState(false)
   const [searchHash, setSearchHash] = useState('')
+  const [recordId, setRecordId] = useState('')
   const [dragActive, setDragActive] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [verificationProgress, setVerificationProgress] = useState(0)
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault()
@@ -74,474 +152,586 @@ export default function VerifyDocuments({ user }: VerifyDocumentsProps) {
   }
 
   const handleVerifyFile = async () => {
-    if (!selectedFile) return
+    if (!selectedFile && !searchHash && !recordId) return
 
     setIsVerifying(true)
+    setVerificationProgress(0)
     
-    // Simulate verification process
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    // Mock verification result
-    const mockResult: VerificationResult = {
-      isValid: Math.random() > 0.3, // 70% chance of being valid
-      documentHash: 'QmYjtig7VJQ6XsnUjqqJvj7QaMcCAwtrgNdahSiFofrE7o',
-      onChainHash: 'QmYjtig7VJQ6XsnUjqqJvj7QaMcCAwtrgNdahSiFofrE7o',
-      timestampOnChain: '2024-12-15T10:30:00Z',
-      issuer: 'Dr. Sarah Johnson - City Medical Center',
-      recordType: 'lab_report',
-      verificationLevel: 'high',
-      blockNumber: 15432876,
-      transactionHash: '0xabc123def456ghi789jkl012mno345pqr678stu901vwx234',
-      metadata: {
-        fileName: selectedFile.name,
-        fileSize: `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB`,
-        mimeType: selectedFile.type,
-        ipfsHash: 'QmYjtig7VJQ6XsnUjqqJvj7QaMcCAwtrgNdahSiFofrE7o'
-      }
+    // Simulate progressive verification
+    const progressSteps = [
+      { progress: 20, message: 'Analyzing document format...' },
+      { progress: 40, message: 'Calculating document hash...' },
+      { progress: 60, message: 'Checking blockchain records...' },
+      { progress: 80, message: 'Verifying provider credentials...' },
+      { progress: 95, message: 'Finalizing verification...' },
+      { progress: 100, message: 'Verification complete!' }
+    ]
+
+    for (const step of progressSteps) {
+      await new Promise(resolve => setTimeout(resolve, 800))
+      setVerificationProgress(step.progress)
     }
 
-    setVerificationResult(mockResult)
-    setIsVerifying(false)
+    try {
+      let fileData: string | undefined
+      
+      if (selectedFile) {
+        // Convert file to base64 for hash calculation
+        const buffer = await selectedFile.arrayBuffer()
+        fileData = Buffer.from(buffer).toString('base64')
+      }
+
+      const response = await fetch('/api/verify/document', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          documentCID: searchHash || undefined,
+          recordId: recordId || undefined,
+          userAddress: address,
+          fileData: fileData
+        })
+      })
+
+      const result = await response.json()
+      setVerificationResult(result)
+    } catch (error) {
+      console.error('Verification error:', error)
+      setVerificationResult({
+        success: false,
+        verification: {
+          status: 'error',
+          score: 0,
+          timestamp: new Date().toISOString(),
+          verificationId: '',
+          checks: {
+            recordExists: false,
+            ipfsIntegrity: false,
+            blockchainRecord: false,
+            hashMatch: false,
+            timestampValid: false,
+            signatureValid: false,
+            providerValid: false,
+            formatValid: false,
+            consensusCheck: false,
+            cryptoProof: false
+          },
+          recommendations: ['Please try again or contact support'],
+          warnings: ['Verification system temporarily unavailable'],
+          blockchain: {
+            network: '',
+            contractAddress: '',
+            verificationTxHash: '',
+            blockNumber: 0,
+            gasUsed: 0,
+            confirmations: 0
+          },
+          technical: {
+            hashMatched: false,
+            ipfsAccessible: false,
+            consensusReached: false,
+            signatureVerified: false
+          },
+          metadata: {
+            verificationMethod: '',
+            confidenceLevel: 'low',
+            riskLevel: 'high',
+            nextVerificationDue: '',
+            verificationCost: ''
+          }
+        },
+        urls: {
+          baseScanTx: '',
+          baseScanContract: '',
+          verificationReport: ''
+        }
+      })
+    } finally {
+      setIsVerifying(false)
+      setVerificationProgress(0)
+    }
   }
 
-  const handleVerifyHash = async () => {
-    if (!searchHash.trim()) return
+  const handleVerifyByHash = async () => {
+    if (!searchHash) return
+    setSelectedFile(null)
+    setRecordId('')
+    await handleVerifyFile()
+  }
 
-    setIsVerifying(true)
-    
-    // Simulate hash verification
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
-    const mockResult: VerificationResult = {
-      isValid: true,
-      documentHash: searchHash,
-      onChainHash: searchHash,
-      timestampOnChain: '2024-12-10T14:15:00Z',
-      issuer: 'Dr. Michael Chen - Health Plus Clinic',
-      recordType: 'prescription',
-      verificationLevel: 'high',
-      blockNumber: 15421543,
-      transactionHash: '0xdef789ghi012jkl345mno678pqr901stu234vwx567yza890',
-      metadata: {
-        fileName: 'prescription_diabetes_medication.pdf',
-        fileSize: '1.8 MB',
-        mimeType: 'application/pdf',
-        ipfsHash: searchHash
-      }
-    }
-
-    setVerificationResult(mockResult)
-    setIsVerifying(false)
+  const handleVerifyByRecordId = async () => {
+    if (!recordId) return
+    setSelectedFile(null)
+    setSearchHash('')
+    await handleVerifyFile()
   }
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
   }
 
-  const formatDate = (timestamp: string) => {
-    return new Date(timestamp).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
-
-  const getVerificationLevelColor = (level: string) => {
-    switch (level) {
-      case 'high': return 'text-green-400 bg-green-500/20 border-green-500/30'
-      case 'medium': return 'text-yellow-400 bg-yellow-500/20 border-yellow-500/30'
-      case 'low': return 'text-red-400 bg-red-500/20 border-red-500/30'
-      default: return 'text-gray-400 bg-gray-500/20 border-gray-500/30'
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'verified': return 'text-green-400'
+      case 'pending': return 'text-yellow-400'
+      case 'flagged': return 'text-red-400'
+      case 'error': return 'text-gray-400'
+      default: return 'text-gray-400'
     }
   }
 
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'verified': return <CheckCircle className="text-green-400" size={24} />
+      case 'pending': return <Clock className="text-yellow-400" size={24} />
+      case 'flagged': return <AlertTriangle className="text-red-400" size={24} />
+      case 'error': return <X className="text-gray-400" size={24} />
+      default: return <AlertCircle className="text-gray-400" size={24} />
+    }
+  }
+
+  const getScoreColor = (score: number) => {
+    if (score >= 90) return 'from-green-500 to-emerald-500'
+    if (score >= 70) return 'from-yellow-500 to-orange-500'
+    return 'from-red-500 to-rose-500'
+  }
+
   return (
-    <WalletConnection 
-      title="Connect Wallet to Verify Documents"
-      description="Verify the authenticity of medical documents using blockchain technology"
-      requiredFeature="document verification"
-    >
+    <WalletConnection title="Verify Documents" description="Connect your wallet to verify the authenticity of medical documents">
       <div className="space-y-8">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#3ECF8E]/20 via-[#262626] to-[#1F1F1F] p-8 border border-[#3ECF8E]/20"
-      >
-        <div className="absolute top-0 right-0 w-32 h-32 bg-[#3ECF8E]/10 rounded-full blur-3xl" />
-        <div className="relative z-10">
-          <h2 className="text-3xl font-bold text-white mb-2 flex items-center">
-            <CheckCircle className="mr-3 text-[#3ECF8E]" size={32} />
-            Document Verification
-          </h2>
-          <p className="text-[#A3A3A3] text-lg">
-            Verify the authenticity and integrity of medical documents using blockchain technology
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center"
+        >
+          <h1 className="text-3xl font-bold text-white mb-4">Document Verification</h1>
+          <p className="text-[#A3A3A3] text-lg max-w-2xl mx-auto">
+            Verify the authenticity and integrity of medical documents using blockchain technology. 
+            Upload a file or search by document hash or record ID.
           </p>
-        </div>
-      </motion.div>
+        </motion.div>
 
-      {/* Verification Interface */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-      >
-        <Card className="bg-gradient-to-br from-[#262626] to-[#1F1F1F] border-[#404040]/50">
-          <CardHeader>
-            <CardTitle className="text-white">Verify Medical Document</CardTitle>
-            <CardDescription className="text-[#A3A3A3]">
-              Upload a document or enter an IPFS hash to verify its authenticity on the blockchain
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              <TabsList className="grid grid-cols-2 w-full bg-[#1F1F1F] border border-[#404040]">
-                <TabsTrigger value="upload" className="data-[state=active]:bg-[#3ECF8E] data-[state=active]:text-black">
-                  Upload Document
-                </TabsTrigger>
-                <TabsTrigger value="hash" className="data-[state=active]:bg-[#3ECF8E] data-[state=active]:text-black">
-                  Verify by Hash
-                </TabsTrigger>
-              </TabsList>
+        {/* Verification Methods */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList className="grid w-full grid-cols-3 bg-[#1F1F1F] border border-[#404040]">
+              <TabsTrigger value="upload" className="text-white data-[state=active]:bg-[#3ECF8E] data-[state=active]:text-black">
+                <Upload size={16} className="mr-2" />
+                Upload File
+              </TabsTrigger>
+              <TabsTrigger value="hash" className="text-white data-[state=active]:bg-[#3ECF8E] data-[state=active]:text-black">
+                <Hash size={16} className="mr-2" />
+                By Hash/CID
+              </TabsTrigger>
+              <TabsTrigger value="record" className="text-white data-[state=active]:bg-[#3ECF8E] data-[state=active]:text-black">
+                <Search size={16} className="mr-2" />
+                By Record ID
+              </TabsTrigger>
+            </TabsList>
 
-              <TabsContent value="upload" className="space-y-6">
-                {/* File Upload */}
-                <div className="space-y-3">
-                  <Label className="text-white">Select Document to Verify</Label>
+            <TabsContent value="upload" className="space-y-6">
+              <Card className="bg-gradient-to-br from-[#262626] to-[#1F1F1F] border-[#404040]/50">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center space-x-2">
+                    <Upload className="text-[#3ECF8E]" size={24} />
+                    <span>Upload Document to Verify</span>
+                  </CardTitle>
+                  <CardDescription className="text-[#A3A3A3]">
+                    Upload the document you want to verify against blockchain records
+                  </CardDescription>
+                </CardHeader>
+                
+                <CardContent className="space-y-6">
                   <div
-                    className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-300 ${
-                      dragActive
-                        ? 'border-[#3ECF8E] bg-[#3ECF8E]/5'
-                        : selectedFile
-                        ? 'border-[#3ECF8E] bg-[#3ECF8E]/5'
-                        : 'border-[#404040] bg-[#1F1F1F] hover:border-[#3ECF8E]/50'
+                    className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 ${
+                      dragActive 
+                        ? 'border-[#3ECF8E] bg-[#3ECF8E]/10' 
+                        : selectedFile 
+                          ? 'border-[#3ECF8E] bg-[#3ECF8E]/5'
+                          : 'border-[#404040] hover:border-[#3ECF8E]/50'
                     }`}
                     onDragEnter={handleDrag}
                     onDragLeave={handleDrag}
                     onDragOver={handleDrag}
                     onDrop={handleDrop}
                   >
-                    <input
-                      type="file"
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      onChange={handleFileInputChange}
-                      accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx"
-                    />
-                    
                     {selectedFile ? (
-                      <div className="space-y-3">
-                        <div className="w-16 h-16 bg-[#3ECF8E]/20 rounded-2xl flex items-center justify-center mx-auto">
-                          <FileText className="text-[#3ECF8E]" size={24} />
-                        </div>
-                        <div>
+                      <div className="flex items-center justify-center space-x-3">
+                        <FileText className="text-[#3ECF8E]" size={32} />
+                        <div className="text-left">
                           <p className="text-white font-medium">{selectedFile.name}</p>
                           <p className="text-[#A3A3A3] text-sm">
                             {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                           </p>
                         </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setSelectedFile(null)}
+                          className="text-red-400 hover:text-red-300"
+                        >
+                          <X size={16} />
+                        </Button>
                       </div>
                     ) : (
-                      <div className="space-y-3">
-                        <div className="w-16 h-16 bg-[#404040] rounded-2xl flex items-center justify-center mx-auto">
-                          <Upload className="text-[#A3A3A3]" size={24} />
-                        </div>
+                      <div className="space-y-4">
+                        <Upload className="mx-auto text-[#A3A3A3]" size={48} />
                         <div>
-                          <p className="text-white font-medium">Drop your document here, or click to browse</p>
-                          <p className="text-[#A3A3A3] text-sm">
-                            Supports PDF, Images, Word documents
-                          </p>
+                          <p className="text-white font-medium">Drop your file here or click to browse</p>
+                          <p className="text-[#A3A3A3] text-sm">PDF, JPEG, PNG, DICOM files up to 10MB</p>
                         </div>
                       </div>
                     )}
+                    
+                    <input
+                      type="file"
+                      onChange={handleFileInputChange}
+                      accept=".pdf,.jpg,.jpeg,.png,.dcm"
+                      className="hidden"
+                      id="file-upload"
+                    />
+                    
+                    {!selectedFile && (
+                      <label
+                        htmlFor="file-upload"
+                        className="mt-4 inline-block bg-gradient-to-r from-[#3ECF8E] to-[#2DD4BF] hover:from-[#2DD4BF] hover:to-[#3ECF8E] text-black font-medium py-2 px-6 rounded-xl cursor-pointer transition-all duration-300"
+                      >
+                        Choose File
+                      </label>
+                    )}
                   </div>
-                </div>
 
-                <Button
-                  onClick={handleVerifyFile}
-                  disabled={!selectedFile || isVerifying}
-                  className="w-full bg-gradient-to-r from-[#3ECF8E] to-[#2DD4BF] hover:from-[#2DD4BF] hover:to-[#3ECF8E] text-black font-medium h-12 disabled:opacity-50"
-                >
-                  {isVerifying ? (
-                    <span className="flex items-center">
-                      <div className="animate-spin mr-2 w-4 h-4 border-2 border-black border-t-transparent rounded-full" />
-                      Verifying Document...
-                    </span>
-                  ) : (
-                    <span className="flex items-center">
-                      <CheckCircle className="mr-2" size={16} />
-                      Verify Document
-                    </span>
-                  )}
-                </Button>
-              </TabsContent>
+                  <Button
+                    onClick={handleVerifyFile}
+                    disabled={!selectedFile || isVerifying}
+                    className="w-full bg-gradient-to-r from-[#3ECF8E] to-[#2DD4BF] hover:from-[#2DD4BF] hover:to-[#3ECF8E] text-black font-medium h-12 text-lg"
+                  >
+                    {isVerifying ? (
+                      <span className="flex items-center space-x-2">
+                        <RefreshCw className="animate-spin" size={20} />
+                        <span>Verifying...</span>
+                      </span>
+                    ) : (
+                      <span className="flex items-center space-x-2">
+                        <Shield size={20} />
+                        <span>Verify Document</span>
+                      </span>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-              <TabsContent value="hash" className="space-y-6">
-                {/* Hash Input */}
-                <div className="space-y-3">
-                  <Label className="text-white">IPFS Hash or Document ID</Label>
-                  <div className="flex space-x-3">
+            <TabsContent value="hash" className="space-y-6">
+              <Card className="bg-gradient-to-br from-[#262626] to-[#1F1F1F] border-[#404040]/50">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center space-x-2">
+                    <Hash className="text-[#3ECF8E]" size={24} />
+                    <span>Verify by Document Hash/CID</span>
+                  </CardTitle>
+                  <CardDescription className="text-[#A3A3A3]">
+                    Enter the IPFS CID or document hash to verify its authenticity
+                  </CardDescription>
+                </CardHeader>
+                
+                <CardContent className="space-y-6">
+                  <div className="space-y-2">
+                    <Label className="text-white">Document CID or Hash</Label>
                     <Input
                       value={searchHash}
                       onChange={(e) => setSearchHash(e.target.value)}
-                      className="bg-[#1F1F1F] border-[#404040] text-white"
-                      placeholder="QmYjtig7VJQ6XsnUjqqJvj7QaMcCAwtrgNdahSiFofrE7o"
+                      placeholder="Qm... or document hash"
+                      className="bg-[#1F1F1F] border-[#404040] text-white font-mono"
                     />
-                    <Button
-                      onClick={handleVerifyHash}
-                      disabled={!searchHash.trim() || isVerifying}
-                      className="bg-gradient-to-r from-[#3ECF8E] to-[#2DD4BF] hover:from-[#2DD4BF] hover:to-[#3ECF8E] text-black font-medium px-6 disabled:opacity-50"
-                    >
-                      {isVerifying ? (
-                        <div className="animate-spin w-4 h-4 border-2 border-black border-t-transparent rounded-full" />
-                      ) : (
-                        <Search size={16} />
-                      )}
-                    </Button>
                   </div>
+
+                  <Button
+                    onClick={handleVerifyByHash}
+                    disabled={!searchHash || isVerifying}
+                    className="w-full bg-gradient-to-r from-[#3ECF8E] to-[#2DD4BF] hover:from-[#2DD4BF] hover:to-[#3ECF8E] text-black font-medium h-12 text-lg"
+                  >
+                    {isVerifying ? (
+                      <span className="flex items-center space-x-2">
+                        <RefreshCw className="animate-spin" size={20} />
+                        <span>Verifying...</span>
+                      </span>
+                    ) : (
+                      <span className="flex items-center space-x-2">
+                        <Search size={20} />
+                        <span>Verify by Hash</span>
+                      </span>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="record" className="space-y-6">
+              <Card className="bg-gradient-to-br from-[#262626] to-[#1F1F1F] border-[#404040]/50">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center space-x-2">
+                    <Search className="text-[#3ECF8E]" size={24} />
+                    <span>Verify by Record ID</span>
+                  </CardTitle>
+                  <CardDescription className="text-[#A3A3A3]">
+                    Enter the medical record ID to verify the document
+                  </CardDescription>
+                </CardHeader>
+                
+                <CardContent className="space-y-6">
+                  <div className="space-y-2">
+                    <Label className="text-white">Medical Record ID</Label>
+                    <Input
+                      value={recordId}
+                      onChange={(e) => setRecordId(e.target.value)}
+                      placeholder="Enter record ID (e.g., 123456)"
+                      className="bg-[#1F1F1F] border-[#404040] text-white"
+                    />
+                  </div>
+
+                  <Button
+                    onClick={handleVerifyByRecordId}
+                    disabled={!recordId || isVerifying}
+                    className="w-full bg-gradient-to-r from-[#3ECF8E] to-[#2DD4BF] hover:from-[#2DD4BF] hover:to-[#3ECF8E] text-black font-medium h-12 text-lg"
+                  >
+                    {isVerifying ? (
+                      <span className="flex items-center space-x-2">
+                        <RefreshCw className="animate-spin" size={20} />
+                        <span>Verifying...</span>
+                      </span>
+                    ) : (
+                      <span className="flex items-center space-x-2">
+                        <Search size={20} />
+                        <span>Verify by Record ID</span>
+                      </span>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </motion.div>
+
+        {/* Verification Progress */}
+        <AnimatePresence>
+          {isVerifying && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <Card className="bg-gradient-to-br from-[#262626] to-[#1F1F1F] border-[#404040]/50">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center space-x-2">
+                    <RefreshCw className="text-[#3ECF8E] animate-spin" size={24} />
+                    <span>Verification in Progress</span>
+                  </CardTitle>
+                </CardHeader>
+                
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-[#A3A3A3]">Progress</span>
+                      <span className="text-[#3ECF8E]">{verificationProgress}%</span>
+                    </div>
+                    <Progress value={verificationProgress} className="h-2" />
+                  </div>
+                  
                   <p className="text-[#A3A3A3] text-sm">
-                    Enter the IPFS hash or document ID to verify its authenticity and blockchain record
+                    Please wait while we verify your document against blockchain records...
                   </p>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-      </motion.div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-      {/* Verification Result */}
-      {verificationResult && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <Card className="bg-gradient-to-br from-[#262626] to-[#1F1F1F] border-[#404040]/50">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center">
-                {verificationResult.isValid ? (
-                  <>
-                    <CheckCircle className="mr-3 text-green-400" size={24} />
-                    Document Verified
-                  </>
-                ) : (
-                  <>
-                    <AlertTriangle className="mr-3 text-red-400" size={24} />
-                    Verification Failed
-                  </>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Status Alert */}
-              <Alert className={verificationResult.isValid ? 'border-green-500/30 bg-green-500/10' : 'border-red-500/30 bg-red-500/10'}>
-                <AlertDescription className={verificationResult.isValid ? 'text-green-400' : 'text-red-400'}>
-                  {verificationResult.isValid 
-                    ? 'This document has been successfully verified on the blockchain. The document hash matches the on-chain record and the issuer is authenticated.'
-                    : 'This document could not be verified. Either the document has been tampered with or it was never registered on the blockchain.'
-                  }
-                </AlertDescription>
-              </Alert>
-
-              {verificationResult.isValid && (
-                <>
-                  {/* Verification Details */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <div>
-                        <Label className="text-[#A3A3A3] text-sm">Document Information</Label>
-                        <div className="mt-2 space-y-2">
-                          <div className="flex justify-between">
-                            <span className="text-white">File Name:</span>
-                            <span className="text-[#A3A3A3]">{verificationResult.metadata.fileName}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-white">File Size:</span>
-                            <span className="text-[#A3A3A3]">{verificationResult.metadata.fileSize}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-white">MIME Type:</span>
-                            <span className="text-[#A3A3A3]">{verificationResult.metadata.mimeType}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label className="text-[#A3A3A3] text-sm">Verification Level</Label>
-                        <div className="mt-2">
-                          <Badge className={getVerificationLevelColor(verificationResult.verificationLevel)}>
-                            <Shield size={12} className="mr-1" />
-                            {verificationResult.verificationLevel.toUpperCase()} CONFIDENCE
-                          </Badge>
-                        </div>
-                      </div>
+        {/* Verification Results */}
+        <AnimatePresence>
+          {verificationResult && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-6"
+            >
+              {/* Main Status Card */}
+              <Card className={`bg-gradient-to-br from-[#262626] to-[#1F1F1F] border-2 ${
+                verificationResult.verification.status === 'verified' ? 'border-green-500/50' :
+                verificationResult.verification.status === 'pending' ? 'border-yellow-500/50' :
+                'border-red-500/50'
+              }`}>
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      {getStatusIcon(verificationResult.verification.status)}
+                      <span>Verification Result</span>
                     </div>
-
-                    <div className="space-y-4">
-                      <div>
-                        <Label className="text-[#A3A3A3] text-sm">Blockchain Information</Label>
-                        <div className="mt-2 space-y-2">
-                          <div className="flex justify-between">
-                            <span className="text-white">Block Number:</span>
-                            <span className="text-[#A3A3A3]">#{verificationResult.blockNumber}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-white">Timestamp:</span>
-                            <span className="text-[#A3A3A3]">{formatDate(verificationResult.timestampOnChain)}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-white">Issuer:</span>
-                            <span className="text-[#A3A3A3] text-right ml-4">{verificationResult.issuer}</span>
-                          </div>
-                        </div>
-                      </div>
+                    <Badge className={`${getStatusColor(verificationResult.verification.status)} bg-transparent border`}>
+                      {verificationResult.verification.status.toUpperCase()}
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                
+                <CardContent className="space-y-6">
+                  {/* Verification Score */}
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <Label className="text-white text-lg">Verification Score</Label>
+                      <span className="text-2xl font-bold text-white">{verificationResult.verification.score}/100</span>
+                    </div>
+                    <div className="w-full bg-[#404040] rounded-full h-4">
+                      <div 
+                        className={`bg-gradient-to-r ${getScoreColor(verificationResult.verification.score)} h-4 rounded-full transition-all duration-1000`}
+                        style={{ width: `${verificationResult.verification.score}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-sm text-[#A3A3A3]">
+                      <span>Risk Level: {verificationResult.verification.metadata.riskLevel}</span>
+                      <span>Confidence: {verificationResult.verification.metadata.confidenceLevel}</span>
                     </div>
                   </div>
 
-                  {/* Technical Details */}
-                  <div className="space-y-4">
-                    <Label className="text-[#A3A3A3] text-sm">Technical Details</Label>
-                    
-                    <div className="space-y-3">
-                      <div className="bg-[#1F1F1F] rounded-xl p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-white text-sm font-medium">IPFS Hash</span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => copyToClipboard(verificationResult.metadata.ipfsHash)}
-                            className="text-[#A3A3A3] hover:text-white p-1 h-auto"
-                          >
-                            <Copy size={12} />
-                          </Button>
+                  {/* Document Information */}
+                  {verificationResult.verification.document && (
+                    <div className="grid md:grid-cols-2 gap-4 p-4 bg-[#1F1F1F] rounded-lg">
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <UserIcon size={16} className="text-[#3ECF8E]" />
+                          <Label className="text-[#A3A3A3] text-sm">Patient Name</Label>
                         </div>
-                        <p className="text-[#3ECF8E] font-mono text-xs break-all">{verificationResult.metadata.ipfsHash}</p>
+                        <p className="text-white font-medium">{verificationResult.verification.document.patientName}</p>
                       </div>
                       
-                      <div className="bg-[#1F1F1F] rounded-xl p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-white text-sm font-medium">Transaction Hash</span>
-                          <div className="flex space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => copyToClipboard(verificationResult.transactionHash)}
-                              className="text-[#A3A3A3] hover:text-white p-1 h-auto"
-                            >
-                              <Copy size={12} />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => window.open(`https://sepolia.basescan.org/tx/${verificationResult.transactionHash}`, '_blank')}
-                              className="text-[#A3A3A3] hover:text-white p-1 h-auto"
-                            >
-                              <ExternalLink size={12} />
-                            </Button>
-                          </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Building size={16} className="text-[#3ECF8E]" />
+                          <Label className="text-[#A3A3A3] text-sm">Healthcare Provider</Label>
                         </div>
-                        <p className="text-[#3ECF8E] font-mono text-xs break-all">{verificationResult.transactionHash}</p>
+                        <p className="text-white font-medium">{verificationResult.verification.document.provider.name}</p>
                       </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Calendar size={16} className="text-[#3ECF8E]" />
+                          <Label className="text-[#A3A3A3] text-sm">Issue Date</Label>
+                        </div>
+                        <p className="text-white font-medium">
+                          {new Date(verificationResult.verification.document.issueDate).toLocaleDateString()}
+                        </p>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <FileText size={16} className="text-[#3ECF8E]" />
+                          <Label className="text-[#A3A3A3] text-sm">Record Type</Label>
+                        </div>
+                        <p className="text-white font-medium">{verificationResult.verification.document.recordType}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Verification Checks */}
+                  <div className="space-y-3">
+                    <Label className="text-white text-lg">Verification Checks</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {Object.entries(verificationResult.verification.checks).map(([key, passed]) => (
+                        <div key={key} className="flex items-center space-x-2 p-2 bg-[#1F1F1F] rounded">
+                          {passed ? (
+                            <CheckCircle size={16} className="text-green-400" />
+                          ) : (
+                            <X size={16} className="text-red-400" />
+                          )}
+                          <span className="text-sm text-white capitalize">
+                            {key.replace(/([A-Z])/g, ' $1').trim()}
+                          </span>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex flex-wrap gap-3">
+                  {/* Recommendations and Warnings */}
+                  {(verificationResult.verification.recommendations.length > 0 || 
+                    verificationResult.verification.warnings.length > 0) && (
+                    <div className="space-y-4">
+                      {verificationResult.verification.recommendations.length > 0 && (
+                        <Alert className="border-[#3ECF8E]/30 bg-[#3ECF8E]/10">
+                          <CheckCircle size={16} className="text-[#3ECF8E]" />
+                          <AlertDescription className="text-[#3ECF8E]">
+                            <strong>Recommendations:</strong>
+                            <ul className="mt-2 space-y-1">
+                              {verificationResult.verification.recommendations.map((rec, index) => (
+                                <li key={index} className="text-sm">• {rec}</li>
+                              ))}
+                            </ul>
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                      
+                      {verificationResult.verification.warnings.length > 0 && (
+                        <Alert className="border-yellow-500/30 bg-yellow-500/10">
+                          <AlertTriangle size={16} className="text-yellow-500" />
+                          <AlertDescription className="text-yellow-500">
+                            <strong>Warnings:</strong>
+                            <ul className="mt-2 space-y-1">
+                              {verificationResult.verification.warnings.map((warning, index) => (
+                                <li key={index} className="text-sm">• {warning}</li>
+                              ))}
+                            </ul>
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-wrap gap-3 pt-4">
                     <Button
-                      variant="outline"
-                      className="border-[#404040] text-white hover:border-[#3ECF8E]"
-                      onClick={() => window.open(`https://ipfs.io/ipfs/${verificationResult.metadata.ipfsHash}`, '_blank')}
+                      onClick={() => window.open(verificationResult.urls.baseScanTx, '_blank')}
+                      className="bg-[#3ECF8E]/20 text-[#3ECF8E] border border-[#3ECF8E]/30 hover:bg-[#3ECF8E]/30"
                     >
-                      <ExternalLink className="mr-2" size={14} />
-                      View on IPFS
-                    </Button>
-                    
-                    <Button
-                      variant="outline"
-                      className="border-[#404040] text-white hover:border-[#3ECF8E]"
-                      onClick={() => window.open(`https://sepolia.basescan.org/tx/${verificationResult.transactionHash}`, '_blank')}
-                    >
-                      <ExternalLink className="mr-2" size={14} />
+                      <ExternalLink size={16} className="mr-2" />
                       View on BaseScan
                     </Button>
                     
+                    {verificationResult.urls.ipfsGateway && (
+                      <Button
+                        onClick={() => window.open(verificationResult.urls.ipfsGateway!, '_blank')}
+                        className="bg-blue-500/20 text-blue-400 border border-blue-500/30 hover:bg-blue-500/30"
+                      >
+                        <Hash size={16} className="mr-2" />
+                        View on IPFS
+                      </Button>
+                    )}
+                    
                     <Button
-                      className="bg-gradient-to-r from-[#3ECF8E] to-[#2DD4BF] text-black"
-                      onClick={() => {
-                        // Generate verification report
-                        const report = {
-                          verified: verificationResult.isValid,
-                          document: verificationResult.metadata.fileName,
-                          verificationTime: new Date().toISOString(),
-                          blockchainTimestamp: verificationResult.timestampOnChain,
-                          transactionHash: verificationResult.transactionHash,
-                          issuer: verificationResult.issuer
-                        }
-                        const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' })
-                        const url = URL.createObjectURL(blob)
-                        const a = document.createElement('a')
-                        a.href = url
-                        a.download = 'verification-report.json'
-                        a.click()
-                      }}
+                      onClick={() => window.open(verificationResult.urls.verificationReport, '_blank')}
+                      className="bg-purple-500/20 text-purple-400 border border-purple-500/30 hover:bg-purple-500/30"
                     >
-                      <FileText className="mr-2" size={14} />
+                      <Download size={16} className="mr-2" />
                       Download Report
                     </Button>
+                    
+                    <Button
+                      onClick={() => copyToClipboard(verificationResult.verification.verificationId)}
+                      variant="ghost"
+                      className="text-[#A3A3A3] hover:text-white"
+                    >
+                      <Copy size={16} className="mr-2" />
+                      Copy Verification ID
+                    </Button>
                   </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
-
-      {/* How It Works */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-        <Card className="bg-gradient-to-br from-[#262626] to-[#1F1F1F] border-[#404040]/50">
-          <CardHeader>
-            <CardTitle className="text-white">How Document Verification Works</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center space-y-3">
-                <div className="w-12 h-12 bg-blue-500/20 rounded-2xl flex items-center justify-center mx-auto">
-                  <Upload className="text-blue-400" size={24} />
-                </div>
-                <h3 className="text-white font-medium">1. Document Upload</h3>
-                <p className="text-[#A3A3A3] text-sm">
-                  Upload your medical document or provide the IPFS hash for verification
-                </p>
-              </div>
-              
-              <div className="text-center space-y-3">
-                <div className="w-12 h-12 bg-purple-500/20 rounded-2xl flex items-center justify-center mx-auto">
-                  <Search className="text-purple-400" size={24} />
-                </div>
-                <h3 className="text-white font-medium">2. Blockchain Lookup</h3>
-                <p className="text-[#A3A3A3] text-sm">
-                  We check the Base blockchain for matching document hashes and verifiable credentials
-                </p>
-              </div>
-              
-              <div className="text-center space-y-3">
-                <div className="w-12 h-12 bg-green-500/20 rounded-2xl flex items-center justify-center mx-auto">
-                  <CheckCircle className="text-green-400" size={24} />
-                </div>
-                <h3 className="text-white font-medium">3. Verification Result</h3>
-                <p className="text-[#A3A3A3] text-sm">
-                  Get instant verification of document authenticity and issuer credentials
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </WalletConnection>
   )

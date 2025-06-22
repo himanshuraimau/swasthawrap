@@ -20,9 +20,11 @@ import {
   Shield,
   Database,
   CheckCircle,
+  Bot,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import AIChatbot from "./modern-ai-chatbot"
+import Web3AgentChat from "./web3-agent-chat"
 import MedicalHistory from "./medical-history"
 import HealthProfile from "./health-profile"
 import Settings from "./settings"
@@ -61,6 +63,7 @@ const mockDashboardData = {
 const navigationItems = [
   { icon: Home, label: "Dashboard", id: "dashboard", active: true, web3: false },
   { icon: MessageCircle, label: "AI Health Chat", id: "chat", web3: false },
+  { icon: Bot, label: "Web3 Agent", id: "web3-agent", web3: true },
   { icon: Upload, label: "Upload Records", id: "upload", web3: true },
   { icon: FileText, label: "Medical History", id: "history", web3: false },
   { icon: Database, label: "Web3 Records", id: "web3-records", web3: true },
@@ -68,8 +71,10 @@ const navigationItems = [
   { icon: CheckCircle, label: "Verify Documents", id: "verify", web3: true },
   { icon: UserIcon, label: "Health Profile", id: "profile", web3: false },
   { icon: SettingsIcon, label: "Settings", id: "settings", web3: false },
+  { icon: Database, label: "Demo Data", id: "demo", web3: true, dev: true },
 ]
 
+import { DemoDataManager } from "./demo-data-manager"
 import type { User } from "@/types"
 
 export default function Dashboard({ user }: { user: User }) {
@@ -94,6 +99,8 @@ export default function Dashboard({ user }: { user: User }) {
     switch (activeSection) {
       case "chat":
         return <AIChatbot user={user} />
+      case "web3-agent":
+        return <Web3AgentChat />
       case "upload":
         return <UploadRecords user={user} />
       case "history":
@@ -104,6 +111,8 @@ export default function Dashboard({ user }: { user: User }) {
         return <ConsentManagement user={user} />
       case "verify":
         return <VerifyDocuments user={user} />
+      case "demo":
+        return <DemoDataManager />
       case "profile":
         return <HealthProfile user={user} />
       case "settings":

@@ -18,13 +18,10 @@ import {
   Volume2,
   VolumeX,
   History,
-  ArrowLeft,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import ChatHistory from "./chat-history"
 import { useChat } from "@/lib/react-query/hooks/useChat"
@@ -44,17 +41,17 @@ import type { User } from "@/types"
 
 export default function ModernAIChatbot({ user }: { user: User }) {
   const { toast } = useToast()
-  const [currentView, setCurrentView] = useState("chat") // 'chat' or 'history'
+  const [currentView, setCurrentView] = useState("chat")
   const [inputMessage, setInputMessage] = useState("")
   const [isRecording, setIsRecording] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState(getLanguageCode(user.language))
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
-  const [isFullscreen, setIsFullscreen] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isOnline, setIsOnline] = useState(navigator.onLine)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -85,14 +82,30 @@ export default function ModernAIChatbot({ user }: { user: User }) {
     speechError
   } = useChat()
 
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom - improved version with smart scrolling
   const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    if (messagesContainerRef.current) {
+      const container = messagesContainerRef.current
+      const isNearBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 100
+      
+      // Only auto-scroll if user is near the bottom (to not interrupt manual scrolling)
+      if (isNearBottom) {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: 'smooth'
+        })
+      }
+    }
   }, [])
 
   useEffect(() => {
-    scrollToBottom()
-  }, [messages, scrollToBottom])
+    // Use requestAnimationFrame for smoother scrolling
+    const timer = requestAnimationFrame(() => {
+      scrollToBottom()
+    })
+    
+    return () => cancelAnimationFrame(timer)
+  }, [messages, isTyping, scrollToBottom])
 
   // Online/Offline detection
   useEffect(() => {
@@ -217,24 +230,23 @@ export default function ModernAIChatbot({ user }: { user: User }) {
         }
 
         mediaRecorder.onstop = async () => {
-          const blob = new Blob(recordedChunksRef.current, { type: 'audio/wav' })
-          const audioFile = new File([blob], 'recording.wav', { type: 'audio/wav' })
+          const audioBlob = new Blob(recordedChunksRef.current, { type: "audio/wav" })
+          const audioFile = new File([audioBlob], "recording.wav", { type: "audio/wav" })
           
           try {
             const response = await convertVoiceToText(audioFile, selectedLanguage)
+            
             if (response.data.text) {
               setInputMessage(response.data.text)
-              textareaRef.current?.focus()
             }
           } catch (error) {
             toast({
-              title: "Voice recognition failed",
-              description: "Please try recording again.",
+              title: "Voice conversion failed",
+              description: "Unable to convert speech to text.",
               variant: "destructive"
             })
           }
-
-          // Stop all tracks
+          
           stream.getTracks().forEach(track => track.stop())
         }
 
@@ -342,297 +354,309 @@ export default function ModernAIChatbot({ user }: { user: User }) {
   }
 
   return (
-    <div className={`h-full flex flex-col ${isFullscreen ? "fixed inset-0 z-50 bg-[#1F1F1F]" : ""}`}>
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-800 bg-[#2A2A2A]">
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Bot className="h-8 w-8 text-blue-400" />
-            <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full ${
-              isOnline ? "bg-green-400" : "bg-red-400"
-            }`} />
-          </div>
-          <div>
-            <h3 className="text-white font-medium">SwasthWrap AI</h3>
-            <p className="text-gray-400 text-sm">
-              {isTyping ? "Typing..." : isOnline ? "Online" : "Offline"}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Select value={selectedLanguage} onValueChange={(value) => setSelectedLanguage(value as "en" | "hi" | "ta")}>
-            <SelectTrigger className="w-24 bg-[#3A3A3A] border-gray-600">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="en">EN</SelectItem>
-              <SelectItem value="hi">हि</SelectItem>
-              <SelectItem value="ta">த</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setCurrentView("history")}
-            className="text-gray-400 hover:text-white"
-          >
-            <History className="h-4 w-4" />
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleStartNewChat}
-            disabled={isStartingSession}
-            className="text-gray-400 hover:text-white"
-          >
-            {isStartingSession ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-          </Button>
-        </div>
-      </div>
-
-      {/* Error Banner */}
-      {(error || sendError || voiceError || speechError) && (
-        <div className="p-3 bg-red-900/20 border-b border-red-800">
-          <div className="flex items-center gap-2 text-red-400">
-            <AlertCircle className="h-4 w-4" />
-            <span className="text-sm">
-              {error || sendError?.message || voiceError?.message || speechError?.message}
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        <AnimatePresence>
-          {messages.map((message) => (
-            <motion.div
-              key={message.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}
-            >
-              <div className={`flex gap-3 max-w-[85%] ${message.type === "user" ? "flex-row-reverse" : ""}`}>
-                <div className="flex-shrink-0">
-                  {message.type === "user" ? (
-                    <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
-                      <UserIcon className="h-4 w-4 text-white" />
-                    </div>
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center">
-                      <Bot className="h-4 w-4 text-white" />
-                    </div>
-                  )}
+    <div className="w-full max-w-4xl mx-auto h-[650px] sm:h-[600px]">
+      <div className="h-full bg-[#1F1F1F] rounded-xl shadow-2xl border border-gray-800 overflow-hidden flex flex-col">
+        {/* Chat Header */}
+        <div className="bg-[#2A2A2A] px-4 sm:px-6 py-4 border-b border-gray-800 flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className="w-10 h-10 bg-blue-600/20 rounded-full flex items-center justify-center">
+                  <Bot className="h-5 w-5 text-blue-400" />
                 </div>
+                <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#2A2A2A] ${
+                  isOnline ? "bg-green-400" : "bg-red-400"
+                }`} />
+              </div>
+              <div className="hidden sm:block">
+                <h3 className="text-white font-semibold text-sm">SwasthWrap AI Assistant</h3>
+                <p className="text-gray-400 text-xs">
+                  {isTyping ? "Typing..." : isOnline ? "Online • Ready to help" : "Offline"}
+                </p>
+              </div>
+              <div className="block sm:hidden">
+                <h3 className="text-white font-semibold text-xs">AI Assistant</h3>
+                <p className="text-gray-400 text-xs">
+                  {isTyping ? "Typing..." : isOnline ? "Online" : "Offline"}
+                </p>
+              </div>
+            </div>
 
-                <div className={`flex flex-col ${message.type === "user" ? "items-end" : "items-start"}`}>
-                  <div
-                    className={`p-3 rounded-lg ${
-                      message.type === "user"
-                        ? "bg-blue-600 text-white"
-                        : "bg-[#2A2A2A] text-gray-100 border border-gray-700"
-                    }`}
-                  >
-                    <p className="whitespace-pre-wrap">{message.content}</p>
-                    
-                    {message.confidence && (
-                      <div className="mt-2 text-xs opacity-70">
-                        Confidence: {Math.round(message.confidence * 100)}%
+            <div className="flex items-center gap-2">
+              <Select value={selectedLanguage} onValueChange={(value) => setSelectedLanguage(value as "en" | "hi" | "ta")}>
+                <SelectTrigger className="w-12 sm:w-16 h-8 bg-[#3A3A3A] border-gray-600 text-white text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">EN</SelectItem>
+                  <SelectItem value="hi">हि</SelectItem>
+                  <SelectItem value="ta">த</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCurrentView("history")}
+                className="h-8 w-8 p-0 text-gray-400 hover:text-white hidden sm:flex"
+              >
+                <History className="h-4 w-4" />
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleStartNewChat}
+                disabled={isStartingSession}
+                className="h-8 w-8 p-0 text-gray-400 hover:text-white"
+              >
+                {isStartingSession ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Error Banner */}
+        {(error || sendError || voiceError || speechError) && (
+          <div className="px-4 sm:px-6 py-3 bg-red-900/20 border-b border-red-800 flex-shrink-0">
+            <div className="flex items-center gap-2 text-red-400">
+              <AlertCircle className="h-4 w-4" />
+              <span className="text-sm">
+                {error || sendError?.message || voiceError?.message || speechError?.message}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Messages */}
+        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 scroll-smooth overscroll-contain bg-[#1A1A1A]">
+          <AnimatePresence>
+            {messages.map((message) => (
+              <motion.div
+                key={message.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}
+              >
+                <div className={`flex gap-3 max-w-[85%] sm:max-w-[75%] ${message.type === "user" ? "flex-row-reverse" : ""}`}>
+                  <div className="flex-shrink-0">
+                    {message.type === "user" ? (
+                      <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
+                        <UserIcon className="h-4 w-4 text-white" />
+                      </div>
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center">
+                        <Bot className="h-4 w-4 text-white" />
                       </div>
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs text-gray-500">
-                      {formatTimestamp(message.timestamp)}
-                    </span>
-                    
-                    {message.type === "ai" && (
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => copyMessage(message.content)}
-                          className="h-6 w-6 p-0 text-gray-500 hover:text-gray-300"
-                        >
-                          <Copy className="h-3 w-3" />
-                        </Button>
-                        
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleTextToSpeech(message.content)}
-                          disabled={isConvertingText}
-                          className="h-6 w-6 p-0 text-gray-500 hover:text-gray-300"
-                        >
-                          {isConvertingText ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <Volume2 className="h-3 w-3" />
-                          )}
-                        </Button>
-                      </div>
-                    )}
+                  <div className={`flex flex-col ${message.type === "user" ? "items-end" : "items-start"}`}>
+                    <div
+                      className={`p-3 sm:p-4 rounded-lg shadow-sm ${
+                        message.type === "user"
+                          ? "bg-blue-600 text-white"
+                          : "bg-[#2A2A2A] text-gray-100 border border-gray-700"
+                      }`}
+                    >
+                      <p className="whitespace-pre-wrap text-sm sm:text-base leading-relaxed">{message.content}</p>
+                      
+                      {message.confidence && (
+                        <div className="mt-2 text-xs opacity-70">
+                          Confidence: {Math.round(message.confidence * 100)}%
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-xs text-gray-500">
+                        {formatTimestamp(message.timestamp)}
+                      </span>
+                      
+                      {message.type === "ai" && (
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copyMessage(message.content)}
+                            className="h-6 w-6 p-0 text-gray-500 hover:text-gray-300"
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                          
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleTextToSpeech(message.content)}
+                            disabled={isConvertingText}
+                            className="h-6 w-6 p-0 text-gray-500 hover:text-gray-300"
+                          >
+                            {isConvertingText ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <Volume2 className="h-3 w-3" />
+                            )}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+
+          {isTyping && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex justify-start"
+            >
+              <div className="flex gap-3 max-w-[85%] sm:max-w-[75%]">
+                <div className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center">
+                  <Bot className="h-4 w-4 text-white" />
+                </div>
+                <div className="bg-[#2A2A2A] border border-gray-700 p-3 sm:p-4 rounded-lg shadow-sm">
+                  <div className="flex gap-1">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }} />
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
                   </div>
                 </div>
               </div>
             </motion.div>
-          ))}
-        </AnimatePresence>
+          )}
 
-        {isTyping && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex justify-start"
-          >
-            <div className="flex gap-3 max-w-[85%]">
-              <div className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center">
-                <Bot className="h-4 w-4 text-white" />
-              </div>
-              <div className="bg-[#2A2A2A] border border-gray-700 p-3 rounded-lg">
-                <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }} />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Quick Responses */}
-      {messages.length <= 1 && (
-        <div className="p-4 border-t border-gray-800">
-          <p className="text-gray-400 text-sm mb-3">Quick questions:</p>
-          <div className="flex flex-wrap gap-2">
-            {quickResponses.map((response, index) => (
-              <Button
-                key={index}
-                variant="outline"
-                size="sm"
-                onClick={() => handleQuickResponse(response)}
-                className="text-xs bg-[#2A2A2A] border-gray-600 hover:bg-[#3A3A3A] text-gray-300"
-              >
-                {response}
-              </Button>
-            ))}
-          </div>
+          <div ref={messagesEndRef} />
         </div>
-      )}
 
-      {/* File Uploads Display */}
-      {uploadedFiles.length > 0 && (
-        <div className="p-4 border-t border-gray-800">
-          <div className="flex flex-wrap gap-2">
-            {uploadedFiles.map((file, index) => (
-              <div key={index} className="flex items-center gap-2 bg-[#2A2A2A] border border-gray-600 rounded-lg p-2">
-                <FileText className="h-4 w-4 text-blue-400" />
-                <span className="text-sm text-gray-300">{file.name}</span>
-                <span className="text-xs text-gray-500">({formatFileSize(file.size)})</span>
+        {/* Quick Responses */}
+        {messages.length <= 1 && (
+          <div className="p-4 sm:p-6 border-t border-gray-800 bg-[#2A2A2A] flex-shrink-0">
+            <p className="text-gray-400 text-sm mb-3">Quick questions:</p>
+            <div className="flex flex-wrap gap-2">
+              {quickResponses.map((response, index) => (
                 <Button
-                  variant="ghost"
+                  key={index}
+                  variant="outline"
                   size="sm"
-                  onClick={() => removeFile(index)}
-                  className="h-4 w-4 p-0 text-gray-500 hover:text-red-400"
+                  onClick={() => handleQuickResponse(response)}
+                  className="text-xs bg-[#1F1F1F] border-gray-600 hover:bg-[#3A3A3A] text-gray-300"
                 >
-                  <X className="h-3 w-3" />
+                  {response}
                 </Button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Input Area */}
-      <div className="p-4 border-t border-gray-800 bg-[#2A2A2A]">
-        <div className="flex gap-3">
-          <div className="flex-1">
-            <Textarea
-              ref={textareaRef}
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              placeholder="Type your health question here..."
-              className="min-h-[60px] max-h-32 bg-[#1F1F1F] border-gray-600 text-white placeholder-gray-400 resize-none"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault()
-                  handleSendMessage()
-                }
-              }}
-            />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploadingDocument}
-              className="h-10 w-10 p-0 text-gray-400 hover:text-white"
-            >
-              {isUploadingDocument ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleVoiceToggle}
-              disabled={isConvertingVoice}
-              className={`h-10 w-10 p-0 ${isRecording ? "text-red-400" : "text-gray-400 hover:text-white"}`}
-            >
-              {isConvertingVoice ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : isRecording ? (
-                <MicOff className="h-4 w-4" />
-              ) : (
-                <Mic className="h-4 w-4" />
-              )}
-            </Button>
-
-            <Button
-              onClick={handleSendMessage}
-              disabled={(!inputMessage.trim() && uploadedFiles.length === 0) || isSending || !isOnline}
-              className="h-10 w-10 p-0 bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
-            >
-              {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            </Button>
-          </div>
-        </div>
-
-        {isSpeaking && (
-          <div className="mt-2 flex items-center gap-2">
-            <Volume2 className="h-4 w-4 text-blue-400" />
-            <span className="text-sm text-gray-400">Playing audio response...</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={stopSpeaking}
-              className="h-6 w-6 p-0 text-gray-400 hover:text-red-400"
-            >
-              <VolumeX className="h-3 w-3" />
-            </Button>
+              ))}
+            </div>
           </div>
         )}
+
+        {/* File Uploads Display */}
+        {uploadedFiles.length > 0 && (
+          <div className="p-4 sm:p-6 border-t border-gray-800 bg-[#2A2A2A] flex-shrink-0">
+            <div className="flex flex-wrap gap-2">
+              {uploadedFiles.map((file, index) => (
+                <div key={index} className="flex items-center gap-2 bg-[#1F1F1F] border border-gray-600 rounded-lg p-2">
+                  <FileText className="h-4 w-4 text-blue-400" />
+                  <span className="text-sm text-gray-300">{file.name}</span>
+                  <span className="text-xs text-gray-500">({formatFileSize(file.size)})</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeFile(index)}
+                    className="h-4 w-4 p-0 text-gray-500 hover:text-red-400"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Input Area */}
+        <div className="p-4 sm:p-6 border-t border-gray-800 bg-[#2A2A2A] flex-shrink-0">
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <Textarea
+                ref={textareaRef}
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                placeholder="Type your health question here..."
+                className="min-h-[60px] max-h-32 bg-[#1F1F1F] border-gray-600 text-gray-100 placeholder-gray-400 resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault()
+                    handleSendMessage()
+                  }
+                }}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingDocument}
+                className="h-10 w-10 p-0 text-gray-400 hover:text-gray-200"
+              >
+                {isUploadingDocument ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleVoiceToggle}
+                disabled={isConvertingVoice}
+                className={`h-10 w-10 p-0 ${isRecording ? "text-red-500" : "text-gray-400 hover:text-gray-200"}`}
+              >
+                {isConvertingVoice ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : isRecording ? (
+                  <MicOff className="h-4 w-4" />
+                ) : (
+                  <Mic className="h-4 w-4" />
+                )}
+              </Button>
+
+              <Button
+                onClick={handleSendMessage}
+                disabled={(!inputMessage.trim() && uploadedFiles.length === 0) || isSending || !isOnline}
+                className="h-10 w-10 p-0 bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+              >
+                {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+
+          {isSpeaking && (
+            <div className="mt-3 flex items-center gap-2">
+              <Volume2 className="h-4 w-4 text-blue-500" />
+              <span className="text-sm text-gray-400">Playing audio response...</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={stopSpeaking}
+                className="h-6 w-6 p-0 text-gray-500 hover:text-red-500"
+              >
+                <VolumeX className="h-3 w-3" />
+              </Button>
+            </div>
+          )}
+        </div>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
+          onChange={handleFileUpload}
+          className="hidden"
+        />
+
+        <audio ref={audioRef} />
       </div>
-
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
-        onChange={handleFileUpload}
-        className="hidden"
-      />
-
-      <audio ref={audioRef} />
     </div>
   )
 }

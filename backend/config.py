@@ -8,7 +8,7 @@ load_dotenv()
 
 class Settings(BaseSettings):
     # Database
-   
+    
     # JWT
     secret_key: str = os.getenv("SECRET_KEY", "your_secret_key_here")
     algorithm: str = os.getenv("ALGORITHM", "HS256")
