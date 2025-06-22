@@ -6,7 +6,7 @@
 
 SwasthWrap is a comprehensive health management platform that combines AI-powered consultations, Web3-secured medical records, and personalized health tracking in a beautiful, multilingual interface. Built for accessibility, privacy, and global healthcare equity.
 
-![SwasthWrap Dashboard](https://via.placeholder.com/800x400/1F1F1F/3ECF8E?text=SwasthWrap+Dashboard)
+![SwasthWrap Dashboard](./image.png)
 
 ## 🎯 **Hackathon Challenge**
 **Theme**: Digital Health Innovation for Global Accessibility  
