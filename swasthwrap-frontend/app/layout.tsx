@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
+import "@/lib/polyfills"
 import { ReactQueryProvider } from "@/lib/react-query/provider"
 import { Web3Provider } from "@/components/web3-provider"
 
